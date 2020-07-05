@@ -43,13 +43,12 @@ class NYUDepthDatasetLabelled(torch.utils.data.Dataset):
     img[:,:,1] = img_mat[1,:,:].T
     img[:,:,2] = img_mat[2,:,:].T
     img = img.astype('uint8')
-    img = Image.fromarray(img)
+    img = Image.fromarray(img, 'RGB')
 
-    depth_mat = self.mat['depths'][idx]
+    depth_mat = self.mat['depths'][self.start_offset + idx]
     depth = np.empty([480, 640])
     depth = depth_mat.T
-    depth = depth.astype('uint8')
-    depth = Image.fromarray(depth)
+    depth = Image.fromarray(depth, 'F')
 
     # to display depth, divide by 4
     if self.transforms:
