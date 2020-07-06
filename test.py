@@ -32,7 +32,7 @@ def get_train_transforms():
   return T.Compose([ToTensor()])
 
 
-def main(data):
+def main():
   # path = 'data/labelled/nyu_depth_v2_labeled.mat'
 
   # train_dset = dataloader.NYUDepthDatasetLabelled(path, 'train', 0.8, None)
@@ -46,30 +46,30 @@ def main(data):
   # io.imshow(np.asarray(depth))
   # io.show()
 
-  train_val_ratio = 0.8
+  # train_val_ratio = 0.8
 
-  nyu_train = []
-  for row in data['data/nyu2_train.csv'].decode('UTF-8').split('\n'):
-    if len(row) > 0:
-      nyu_train.append(row.split(',')) # stores the image and its depth
+  # nyu_train = []
+  # for row in data['data/nyu2_train.csv'].decode('UTF-8').split('\n'):
+  #   if len(row) > 0:
+  #     nyu_train.append(row.split(',')) # stores the image and its depth
 
-  nyu_test = []
-  for row in data['data/nyu2_test.csv'].decode('UTF-8').split('\n'):
-    if len(row) > 0:
-      nyu_test.append(row.split(',')) # stores the image and its depth    
+  # nyu_test = []
+  # for row in data['data/nyu2_test.csv'].decode('UTF-8').split('\n'):
+  #   if len(row) > 0:
+  #     nyu_test.append(row.split(',')) # stores the image and its depth    
 
-  num_train = int(len(nyu_train) * train_val_ratio) # the number of training examples to use
+  # num_train = int(len(nyu_train) * train_val_ratio) # the number of training examples to use
 
-  nyu_val = nyu_train[num_train :]
-  nyu_train = nyu_train[0: num_train]
+  # nyu_val = nyu_train[num_train :]
+  # nyu_train = nyu_train[0: num_train]
 
-  dset = NYUDepthDatasetRaw(data, nyu_train, get_train_transforms())
-  sample = dset[0]
-  img, depth = sample['img'], sample['depth']
+  # dset = NYUDepthDatasetRaw(data, nyu_train, get_train_transforms())
+  # sample = dset[0]
+  # img, depth = sample['img'], sample['depth']
 
 
   # Below applied for PIL Image
-  
+
   # img = np.asarray(img, dtype = 'float32') / 255.0
   # depth = np.asarray(depth, dtype = 'float32') / 255.0
 
@@ -96,5 +96,8 @@ def main(data):
 
   # io.imshow(np.asarray(depth))
   # io.show()
+  path = 'data/raw/nyu_data.zip'
+  dl = DataLoaders(path)
+  a,b,c = dl.get_dataloaders()
 
 

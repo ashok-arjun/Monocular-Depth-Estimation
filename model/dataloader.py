@@ -109,54 +109,62 @@ def get_train_transforms():
   return T.Compose([ToTensor()])
 
 
-
-def get_zip_file(path):
-  input_zip = ZipFile(path)
-  data = {name: input_zip.read(name) for name in input_zip.namelist()}
-  return data
-
-def get_raw_dataloaders(path, train_val_ratio = 0.8, train_batch_size = 10, val_batch_size = 2, shuffle_train = True, tiny_set = False):
-  zip_data = get_zip_file(path)
-
-  nyu_train = []
-  for row in data['data/nyu2_train.csv'].decode('UTF-8').split('\n'):
-    if len(row) > 0:
-      nyu_train.append(row.split(',')) # stores the image and its depth
-
-  nyu_test = []
-  for row in data['data/nyu2_test.csv'].decode('UTF-8').split('\n'):
-    if len(row) > 0:
-      nyu_test.append(row.split(',')) # stores the image and its depth    
-
-  num_train = int(len(nyu_train) * train_val_ratio) # the number of training examples to use
-
-  nyu_train = nyu_train[0: num_train]
-  nyu_val = nyu_train[num_train :]
-
-  if tiny_set:
-    nyu_train = nyu_train[0: int(0.1 * len(nyu_train))]
-    nyu_val = nyu_val[0 : int(0.1 * len(nyu_val))] 
-    nyu_test = nyu_test[0 : int(0.1 * len(nyu_test))]
-
-  train_dataset = NYUDepthDatasetRaw(zip_data, nyu_train, train_transforms)
-  val_dataset = NYUDepthDatasetRaw(zip_data, nyu_val, test_transforms)
-  test_dataset = NYUDepthDatasetRaw(zip_data, nyu_test, test_transforms)
-
-  # batch size should be provided correspondingly if tiny_dataset is required(for checking)
-  train_dataloader = torch.utils.data.DataLoader(train_dataset, 
-                                                batch_size = train_batch_size,
-                                                shuffle = True,
-                                                num_workers = 4) # check error here for collate_fn
-
-  val_dataloader = torch.utils.data.DataLoader(val_dataset, 
-                                                batch_size = val_batch_size,
-                                                shuffle = True,
-                                                num_workers = 4) 
+def get_test_transforms():
+  return T.Compose([ToTensor()])
 
 
-  test_dataloader = torch.utils.data.DataLoader(test_dataset, 
-                                                batch_size = 1,
-                                                shuffle = False,
-                                                num_workers = 2)
 
-  return train_dataloader, val_dataloader, test_dataloader
+class DataLoaders:
+  def __init__(self, path):
+    self.data = self.get_zip_file(path)
+
+  def get_dataloaders(self, train_val_ratio = 0.8, train_batch_size = 10, val_batch_size = 2, shuffle_train = True, tiny_set = False):
+    nyu_train = []
+    for row in self.data['data/nyu2_train.csv'].decode('UTF-8').split('\n'):
+      if len(row) > 0:
+        nyu_train.append(row.split(',')) # stores the image and its depth
+
+    nyu_test = []
+    for row in self.data['data/nyu2_test.csv'].decode('UTF-8').split('\n'):
+      if len(row) > 0:
+        nyu_test.append(row.split(',')) # stores the image and its depth    
+
+    num_train = int(len(nyu_train) * train_val_ratio) # the number of training examples to use
+    
+    nyu_val = nyu_train[num_train:]
+    nyu_train = nyu_train[0: num_train]
+    
+
+    if tiny_set:
+      nyu_train = nyu_train[0: int(0.1 * len(nyu_train))]
+      nyu_val = nyu_val[0 : int(0.1 * len(nyu_val))] 
+      nyu_test = nyu_test[0 : int(0.1 * len(nyu_test))]
+
+    train_dataset = NYUDepthDatasetRaw(self.data, nyu_train, get_train_transforms())
+    val_dataset = NYUDepthDatasetRaw(self.data, nyu_val, get_test_transforms())
+    test_dataset = NYUDepthDatasetRaw(self.data, nyu_test, get_test_transforms())
+
+    # batch size should be provided correspondingly if tiny_dataset is required(for checking)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, 
+                                                  batch_size = train_batch_size,
+                                                  shuffle = True,
+                                                  num_workers = 4) # check error here for collate_fn
+
+    val_dataloader = torch.utils.data.DataLoader(val_dataset, 
+                                                  batch_size = val_batch_size,
+                                                  shuffle = True,
+                                                  num_workers = 4) 
+
+
+    test_dataloader = torch.utils.data.DataLoader(test_dataset, 
+                                                  batch_size = 1,
+                                                  shuffle = False,
+                                                  num_workers = 2)
+
+    return train_dataloader, val_dataloader, test_dataloader
+
+
+  def get_zip_file(self, path):
+    input_zip = ZipFile(path)
+    data = {name: input_zip.read(name) for name in input_zip.namelist()}
+    return data   
