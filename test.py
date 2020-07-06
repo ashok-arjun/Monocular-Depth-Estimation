@@ -26,7 +26,7 @@ def plot_depth(ax, depth, title="Depth"):
     
     ax.axis('off')
     ax.set_title(title)
-    ax.imshow(depth)
+    ax.imshow(depth, )
 
 def get_train_transforms():
   return T.Compose([ToTensor()])
@@ -96,8 +96,3 @@ def main():
 
   # io.imshow(np.asarray(depth))
   # io.show()
-  path = 'data/raw/nyu_data.zip'
-  dl = DataLoaders(path)
-  a,b,c = dl.get_dataloaders()
-
-
