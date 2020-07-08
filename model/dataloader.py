@@ -16,7 +16,7 @@ class ToTensor(object):
     img, depth = sample['img'], sample['depth']
     img = self.to_torch(img)
 
-    depth = depth.resize((320, 240)) # TODO:modularise the shape  
+    depth = depth.resize((320, 240)) # wxh,   TODO:modularise the shape  
 
     depth = self.to_torch(depth)
 
@@ -148,7 +148,7 @@ class DataLoaders:
     train_dataloader = torch.utils.data.DataLoader(train_dataset, 
                                                   batch_size = train_batch_size,
                                                   shuffle = True,
-                                                  num_workers = 4) # check error here for collate_fn
+                                                  num_workers = 4) 
 
     val_dataloader = torch.utils.data.DataLoader(val_dataset, 
                                                   batch_size = val_batch_size,
