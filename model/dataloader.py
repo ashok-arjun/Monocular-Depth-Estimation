@@ -118,7 +118,7 @@ class DataLoaders:
   def __init__(self, path):
     self.data = self.get_zip_file(path)
 
-  def get_dataloaders(self, train_val_ratio = 0.8, train_batch_size = 10, val_batch_size = 2, shuffle_train = True, tiny_set = False):
+  def get_dataloaders(self, train_val_ratio = 0.8, train_batch_size = 5, val_batch_size = 2, shuffle_train = True, tiny_set = False):
     nyu_train = []
     for row in self.data['data/nyu2_train.csv'].decode('UTF-8').split('\n'):
       if len(row) > 0:
