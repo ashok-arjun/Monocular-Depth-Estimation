@@ -71,7 +71,6 @@ class NYUDepthDatasetLabelled(torch.utils.data.Dataset):
     depth = depth_mat.T
     depth = Image.fromarray(depth, 'F')
 
-    # to display depth, divide by 4
     if self.transforms:
       img, depth = self.transforms(img, depth)
 

@@ -19,7 +19,7 @@ def plot_sample_tensor(img, depth):
   Accepts Torch tensors and plots them 
   """
   img = img.cpu().numpy().transpose(1,2,0) * 255
-  depth = depth.cpu().detach().numpy().transpose(1,2,0) / 1000 * 255 #detach is used as requires_grad error appears
+  depth = depth.cpu().detach().numpy().transpose(1,2,0) / 1000 * 255 #detach is used as requires_grad error appears ----> call this function within torch.no_grad() scope
 
   img = Image.fromarray(img.astype(np.uint8), mode = 'RGB')
   depth = Image.fromarray(depth.astype(np.uint8)[:,:,0], mode='L')
@@ -44,23 +44,13 @@ def plot_sample_image(img, depth):
 
 
 class RunningAverage():
-    """A simple class that maintains the running average of a quantity
-    
-    Example:
-    ```
-    loss_avg = RunningAverage()
-    loss_avg.update(2)
-    loss_avg.update(4)
-    loss_avg() = 3
-    ```
-    """
-    def __init__(self):
-        self.steps = 0
-        self.total = 0
-    
-    def update(self, val):
-        self.total += val
-        self.steps += 1
-    
-    def __call__(self):
-        return self.total/float(self.steps)  
+  def __init__(self):
+    self.count = 0
+    self.sum = 0
+
+  def update(self, value, n_items):
+    self.sum += value * n_items
+    self.count += n_items
+
+  def __call__(self):
+    return self.sum/self.count  
