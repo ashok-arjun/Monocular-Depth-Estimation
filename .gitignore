@@ -1,2 +1,5 @@
+/runs/*
+/experiments/*
 *.mat
 *.zip
+
