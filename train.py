@@ -121,8 +121,8 @@ class Trainer():
         writer.add_scalar('Val_'+key, value, iteration_num) 
 
 
-  def compare_predictions(self, writer, images, depths, predictions)         
-    # Plots the image on Tensorboard along with its true depth and prediction depths, and the L1 loss image
+  def compare_predictions(self, writer, images, depths, predictions):
+  # Plots the image on Tensorboard along with its true depth and prediction depths, and the L1 loss image
 
     vis_depths = depths/1000 * 255
     vis_preds = predictions/1000 * 255
