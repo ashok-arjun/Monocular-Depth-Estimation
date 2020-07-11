@@ -1,5 +1,7 @@
 /runs/*
 /experiments/*
+/__pycache__/*
 *.mat
 *.zip
+*.pyc
 
