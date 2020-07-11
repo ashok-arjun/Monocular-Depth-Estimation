@@ -41,6 +41,7 @@ class Trainer():
 
     model = DenseDepth()
     model = model.to(device)
+    model.train()
     optimizer = torch.optim.Adam(model.parameters(), LEARNING_RATE)
 
     # lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = 200, gamma = 0.1)
@@ -48,9 +49,11 @@ class Trainer():
 
     best_rmse = 9e20
     is_best = False
+    best_test_rmse = 9e20
+    is_best_test = False
 
     for epoch in range(NUM_EPOCHS):
-      model.train()
+      
       accumulated_loss = RunningAverage()
       accumulated_iteration_time = RunningAverage()
       epoch_start_time = time.time()
@@ -84,22 +87,22 @@ class Trainer():
         if iteration % 10 == 0: 
           writer.add_scalar('Training loss wrt iterations',loss, net_iteration_number)
 
-        if iteration % 50 == 0:
+        if iteration % 200 == 0:
 
           writer.add_text('eta',eta, net_iteration_number)
-          writer.add_text('loss',str(loss), net_iteration_number)
-          writer.add_text('avg loss',str(accumulated_loss()), net_iteration_number)
+          writer.add_text('loss',str(loss.item()), net_iteration_number)
+          writer.add_text('avg loss',str(accumulated_loss().item()), net_iteration_number)
 
           # print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s ; loss: %f (%f)' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta, loss, accumulated_loss()))
           metrics = evaluate_predictions(predictions, depths)
           self.write_metrics(writer, metrics, net_iteration_number, train = True)
 
-          test_images, test_depths, test_preds, test_loss, test_metrics = evaluate(model, self.dataloaders.get_val_dataloader, batch_size = 2) # evaluate on a random batch in the test dataloader
+          test_images, test_depths, test_preds, test_loss, test_metrics = evaluate(model, self.dataloaders.get_val_dataloader, batch_size = 2) ; model.train() # evaluate(in model.eval()) and back to train
           self.compare_predictions(writer, test_images, test_depths, test_preds, net_iteration_number)
           writer.add_scalar('Val loss on one random batch wrt iterations',test_loss, net_iteration_number)
           self.write_metrics(writer, test_metrics, net_iteration_number, train = False)
 
-          if metrics['rmse'] < best_rmse: #change this to test metrics later
+          if metrics['rmse'] < best_rmse: 
             best_rmse = metrics['rmse']
             is_best = True
 
@@ -108,6 +111,20 @@ class Trainer():
                           'optim_dict': optimizer.state_dict()},
                           is_best = is_best,
                           checkpoint_dir = 'experiments/train')
+
+          if test_metrics['rmse'] < best_test_rmse: 
+            best_test_rmse = test_metrics['rmse']
+            is_best_test = True
+
+          save_checkpoint({'iteration':net_iteration_number, 
+                          'state_dict': model.state_dict(), 
+                          'optim_dict': optimizer.state_dict()},
+                          is_best = is_best_test,
+                          checkpoint_dir = 'experiments/test') 
+
+          is_best_test = False
+          is_best = False
+                               
 
       epoch_end_time = time.time()
       # print('****Epoch: %d ; epoch_time: %f ; av_loss: %f ****' % (epoch, epoch_end_time - epoch_start_time, accumulated_loss()))
