@@ -120,6 +120,18 @@ def evaluate_predictions(predictions, truth):
 """
 LOSSES
 """
+
+
+"""
+Combined loss
+"""
+
+def combined_loss(predictions, truth):
+  return mean_l1_loss(predictions, truth) + gradient_loss(predictions, truth) # add SSIM loss here, after observing the current loss and outputs
+
+"""
+Separate loss function
+"""
 def mean_l1_loss(predictions, truth):
   loss = nn.L1Loss(reduction = 'mean')
   return loss(predictions, truth)

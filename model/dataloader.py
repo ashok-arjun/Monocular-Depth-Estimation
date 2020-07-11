@@ -18,11 +18,8 @@ class ToTensor(object):
 
     depth = depth.resize((320, 240)) # wxh,   TODO:modularise the shape  
 
-    depth = self.to_torch(depth)
 
-    depth = depth.float() * maxDepth
-
-    # TODO:clamp between 10 and 1000 if required
+    depth = self.to_torch(depth).float() * maxDepth  
 
     return {'img': img, 'depth': depth}
 
@@ -32,7 +29,7 @@ class ToTensor(object):
     """  
     if not isinstance(x, Image.Image):
       raise TypeError('Not a PIL Image') 
-    x_numpy = np.asarray(x, dtype = 'float32') / 255.0
+    x_numpy = np.asarray(x, dtype = 'float32')
 
     x_torch = torch.from_numpy(x_numpy)
 
@@ -41,6 +38,7 @@ class ToTensor(object):
       
     x_torch = x_torch.transpose(0, 1).transpose(0, 2).contiguous()  
 
+    x_torch = x_torch.float().div(255)
 
     return x_torch
 
@@ -114,53 +112,40 @@ def get_test_transforms():
 
 
 class DataLoaders:
-  def __init__(self, path):
+  def __init__(self, path, train_val_ratio = 0.8):
     self.data = self.get_zip_file(path)
-
-  def get_dataloaders(self, train_val_ratio = 0.8, train_batch_size = 5, val_batch_size = 2, shuffle_train = True, tiny_set = False):
-    nyu_train = []
+    self.nyu_train = []
     for row in self.data['data/nyu2_train.csv'].decode('UTF-8').split('\n'):
       if len(row) > 0:
-        nyu_train.append(row.split(',')) # stores the image and its depth
+        self.nyu_train.append(row.split(','))
 
-    nyu_test = []
+    self.nyu_test = []
     for row in self.data['data/nyu2_test.csv'].decode('UTF-8').split('\n'):
       if len(row) > 0:
-        nyu_test.append(row.split(',')) # stores the image and its depth    
+        self.nyu_test.append(row.split(','))
 
-    num_train = int(len(nyu_train) * train_val_ratio) # the number of training examples to use
+    num_train = int(len(self.nyu_train) * train_val_ratio) 
     
-    nyu_val = nyu_train[num_train:]
-    nyu_train = nyu_train[0: num_train]
-    
+    self.nyu_val = self.nyu_train[num_train:]
+    self.nyu_train = self.nyu_train[0: num_train]      
 
-    if tiny_set:
-      nyu_train = nyu_train[0: int(0.1 * len(nyu_train))]
-      nyu_val = nyu_val[0 : int(0.1 * len(nyu_val))] 
-      nyu_test = nyu_test[0 : int(0.1 * len(nyu_test))]
+  def get_train_dataloader(self, batch_size, shuffle = True):
 
-    train_dataset = NYUDepthDatasetRaw(self.data, nyu_train, get_train_transforms())
-    val_dataset = NYUDepthDatasetRaw(self.data, nyu_val, get_test_transforms())
-    test_dataset = NYUDepthDatasetRaw(self.data, nyu_test, get_test_transforms())
-
-    # batch size should be provided correspondingly if tiny_dataset is required(for checking)
+    train_dataset = NYUDepthDatasetRaw(self.data, self.nyu_train, get_train_transforms())
     train_dataloader = torch.utils.data.DataLoader(train_dataset, 
-                                                  batch_size = train_batch_size,
-                                                  shuffle = True,
-                                                  num_workers = 4) 
+                                                  batch_size = batch_size,
+                                                  shuffle = shuffle,
+                                                  num_workers = 8) 
+    return train_dataloader
 
+
+  def get_val_dataloader(self, batch_size, shuffle = False):
+    val_dataset = NYUDepthDatasetRaw(self.data, self.nyu_val, get_test_transforms())
     val_dataloader = torch.utils.data.DataLoader(val_dataset, 
-                                                  batch_size = val_batch_size,
-                                                  shuffle = True,
-                                                  num_workers = 4) 
-
-
-    test_dataloader = torch.utils.data.DataLoader(test_dataset, 
-                                                  batch_size = 1,
-                                                  shuffle = False,
+                                                  batch_size = batch_size,
+                                                  shuffle = shuffle,
                                                   num_workers = 2)
-
-    return train_dataloader, val_dataloader, test_dataloader
+    return val_dataloader                                              
 
 
   def get_zip_file(self, path):

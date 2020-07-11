@@ -1,6 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
+import os 
+import shutil
+import torch
+
 
 def plot_color(ax, color, title="Color"):
 
@@ -19,7 +23,9 @@ def plot_sample_tensor(img, depth):
   Accepts Torch tensors and plots them 
   """
   img = img.cpu().numpy().transpose(1,2,0) * 255
-  depth = depth.cpu().detach().numpy().transpose(1,2,0) / 1000 * 255 #detach is used as requires_grad error appears ----> call this function within torch.no_grad() scope
+  print('Before applying utils transform: %f - %f'% (depth.min(), depth.max()))
+  depth = (depth.cpu().numpy().transpose(1,2,0) / 1000) * 255
+  print('After applying utils transform: %f - %f'% (depth.min(), depth.max()))
 
   img = Image.fromarray(img.astype(np.uint8), mode = 'RGB')
   depth = Image.fromarray(depth.astype(np.uint8)[:,:,0], mode='L')
@@ -48,9 +54,23 @@ class RunningAverage():
     self.count = 0
     self.sum = 0
 
-  def update(self, value, n_items):
+  def update(self, value, n_items = 1):
     self.sum += value * n_items
     self.count += n_items
 
   def __call__(self):
     return self.sum/self.count  
+
+
+def save_checkpoint(state, is_best, checkpoint_dir):
+    """Saves model and training parameters at checkpoint + 'last.pth.tar'. If is_best==True, also saves
+    checkpoint + 'best.pth.tar'
+    Args:
+        state: (dict) contains model's state_dict, may contain other keys such as epoch, optimizer state_dict
+        is_best: (bool) True if it is the best model seen till now
+        checkpoint: (string) folder where parameters are to be saved
+    """
+    filepath = os.path.join(checkpoint_dir, 'last.pth.tar')
+    torch.save(state, filepath)
+    if is_best:
+        shutil.copyfile(filepath, os.path.join(checkpoint_dir, 'best.pth.tar'))
