@@ -127,8 +127,7 @@ Combined loss
 """
 
 def combined_loss(predictions, truth):
-  return mean_l1_loss(predictions, truth) + gradient_loss(predictions, truth) # add SSIM loss here, after observing the current loss and outputs
-
+  return 0.1 * mean_l1_loss(predictions, truth) + gradient_loss(predictions, truth)  + (1 - ssim(predictions, truth))*0.5
 """
 Separate loss function
 """
@@ -217,7 +216,7 @@ def create_window(window_size, channel=1):
     window = _2D_window.expand(channel, 1, window_size, window_size).contiguous()
     return window
 
-def ssim(img1, img2, val_range, window_size=11, window=None, size_average=True, full=False):
+def ssim(img1, img2, val_range = 1000.0, window_size=11, window=None, size_average=True, full=False):
     L = val_range
 
     padd = 0

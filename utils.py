@@ -23,9 +23,8 @@ def plot_sample_tensor(img, depth):
   Accepts Torch tensors and plots them 
   """
   img = img.cpu().numpy().transpose(1,2,0) * 255
-  print('Before applying utils transform: %f - %f'% (depth.min(), depth.max()))
+  # print('Range of depth: ', depth.cpu().numpy().min(), depth.cpu().numpy().max())
   depth = (depth.cpu().numpy().transpose(1,2,0) / 1000) * 255
-  print('After applying utils transform: %f - %f'% (depth.min(), depth.max()))
 
   img = Image.fromarray(img.astype(np.uint8), mode = 'RGB')
   depth = Image.fromarray(depth.astype(np.uint8)[:,:,0], mode='L')
@@ -74,3 +73,21 @@ def save_checkpoint(state, is_best, checkpoint_dir):
     torch.save(state, filepath)
     if is_best:
         shutil.copyfile(filepath, os.path.join(checkpoint_dir, 'best.pth.tar'))
+
+def load_checkpoint(checkpoint, model, optimizer=None):
+    """Loads model parameters (state_dict) from file_path. If optimizer is provided, loads state_dict of
+    optimizer assuming it is present in checkpoint.
+    Args:
+        checkpoint: (string) filename which needs to be loaded
+        model: (torch.nn.Module) model for which the parameters are loaded
+        optimizer: (torch.optim) optional: resume optimizer from checkpoint
+    """
+    if not os.path.exists(checkpoint):
+        raise("File doesn't exist {}".format(checkpoint))
+    checkpoint = torch.load(checkpoint)
+    model.load_state_dict(checkpoint['state_dict'])
+
+    if optimizer:
+        optimizer.load_state_dict(checkpoint['optim_dict'])
+
+    return checkpoint

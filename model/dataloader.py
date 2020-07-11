@@ -7,9 +7,41 @@ import torchvision.transforms as T
 from PIL import Image
 from zipfile import ZipFile
 from io import BytesIO
+import random
+from itertools import permutations
 
-# All transforms have to be re-written to support consistency between the image and depth transform
-# Mainly ToTensor()
+class RandomHorizontalFlip(object):
+  def __init__(self, prob = 0.5):
+    self.prob = prob
+  def __call__(self, sample):
+    img, depth = sample['img'], sample['depth']
+
+    assert isinstance(img, Image.Image), 'img is not a PIL Image'
+    assert isinstance(depth, Image.Image), 'depth is not a PIL Image'  
+
+    if random.random() < self.prob:
+      img = img.transpose(Image.FLIP_LEFT_RIGHT)
+      depth = depth.transpose(Image.FLIP_LEFT_RIGHT)
+
+    return {'img': img, 'depth': depth}  
+
+
+class RandomChannelSwap(object):
+  def __init__(self, prob = 0.5):
+    self.prob = prob
+    self.channel_perms = list(permutations(range(3)))
+  def __call__(self, sample):
+    img, depth = sample['img'], sample['depth']
+
+    assert isinstance(img, Image.Image), 'img is not a PIL Image'
+    assert isinstance(depth, Image.Image), 'depth is not a PIL Image'  
+
+    if random.random() < self.prob:
+      img = np.asarray(img)
+      img = Image.fromarray(img[..., list(self.channel_perms[random.randint(0, len(self.channel_perms) - 1)]) ])
+
+    return {'img': img, 'depth': depth}      
+
 
 class ToTensor(object):
   def __call__(self, sample, maxDepth = 1000.0):
@@ -103,7 +135,7 @@ class NYUDepthDatasetRaw(torch.utils.data.Dataset):
 
 
 def get_train_transforms():
-  return T.Compose([ToTensor()])
+  return T.Compose([RandomHorizontalFlip(), RandomChannelSwap(), ToTensor()])
 
 
 def get_test_transforms():
@@ -112,7 +144,7 @@ def get_test_transforms():
 
 
 class DataLoaders:
-  def __init__(self, path, train_val_ratio = 0.8):
+  def __init__(self, path, train_val_ratio = 0.9):
     self.data = self.get_zip_file(path)
     self.nyu_train = []
     for row in self.data['data/nyu2_train.csv'].decode('UTF-8').split('\n'):
@@ -123,6 +155,8 @@ class DataLoaders:
     for row in self.data['data/nyu2_test.csv'].decode('UTF-8').split('\n'):
       if len(row) > 0:
         self.nyu_test.append(row.split(','))
+
+    random.shuffle(self.nyu_train)
 
     num_train = int(len(self.nyu_train) * train_val_ratio) 
     

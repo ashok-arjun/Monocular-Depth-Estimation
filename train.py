@@ -90,7 +90,8 @@ class Trainer():
           metrics = evaluate_predictions(predictions, depths)
           self.write_metrics(writer, metrics, net_iteration_number, train = True)
 
-          test_loss, test_metrics = evaluate(model, self.dataloaders.get_val_dataloader, batch_size = 2) # evaluate on a random batch in the test dataloader
+          test_images, test_depths, test_preds, test_loss, test_metrics = evaluate(model, self.dataloaders.get_val_dataloader, batch_size = 2) # evaluate on a random batch in the test dataloader
+          self.compare_predictions(writer, test_images, test_depths, test_preds)
           writer.add_scalar('Val loss on one random batch wrt iterations',test_loss, net_iteration_number)
           self.write_metrics(writer, test_metrics, net_iteration_number, train = False)
 
@@ -117,7 +118,17 @@ class Trainer():
         writer.add_scalar('Train_'+key, value, iteration_num)
     else:
       for key, value in metrics.items():
-        writer.add_scalar('Val_'+key, value, iteration_num)    
+        writer.add_scalar('Val_'+key, value, iteration_num) 
 
-    
+
+  def compare_predictions(self, writer, images, depths, predictions)         
+    # Plots the image on Tensorboard along with its true depth and prediction depths, and the L1 loss image
+
+    vis_depths = depths/1000 * 255
+    vis_preds = predictions/1000 * 255
+    writer.add_image('Image', vutils.make_grid(images, nrow = 2))
+    writer.add_image('True depth', vutils.make_grid(vis_depths, nrow = 2))
+    writer.add_image('Predicted depth', vutils.make_grid(vis_preds, nrow = 2))
+    writer.add_image('L1 loss', vutils.make_grid(torch.abs(vis_depths - vis_depths), nrow = 2))
+
 

@@ -10,7 +10,7 @@ def evaluate(model, dataloader_getter, batch_size):
   """
   device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
   model = model.to(device)
-
+  
 
   test_dl = dataloader_getter(batch_size = batch_size, shuffle = True) 
 
@@ -18,10 +18,11 @@ def evaluate(model, dataloader_getter, batch_size):
   images, depths = sample['img'], sample['depth']
   images = torch.autograd.Variable(images.to(device))
   depths = torch.autograd.Variable(depths.to(device))
-
-  predictions = model(images)
+  
+  with torch.no_grad():
+    predictions = model(images)
 
   loss = combined_loss(predictions, depths)
   metrics = evaluate_predictions(predictions, depths)
 
-  return loss, metrics
+  return images, depths, predictions, loss, metrics
