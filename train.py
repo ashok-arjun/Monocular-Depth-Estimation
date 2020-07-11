@@ -86,7 +86,11 @@ class Trainer():
 
         if iteration % 50 == 0:
 
-          print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s ; loss: %f (%f)' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta, loss, accumulated_loss()))
+          writer.add_text('eta',eta, net_iteration_number)
+          writer.add_text('loss',str(loss), net_iteration_number)
+          writer.add_text('avg loss',str(accumulated_loss()), net_iteration_number)
+
+          # print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s ; loss: %f (%f)' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta, loss, accumulated_loss()))
           metrics = evaluate_predictions(predictions, depths)
           self.write_metrics(writer, metrics, net_iteration_number, train = True)
 
@@ -106,7 +110,7 @@ class Trainer():
                           checkpoint_dir = 'experiments/train')
 
       epoch_end_time = time.time()
-      print('****Epoch: %d ; epoch_time: %f ; av_loss: %f ****' % (epoch, epoch_end_time - epoch_start_time, accumulated_loss()))
+      # print('****Epoch: %d ; epoch_time: %f ; av_loss: %f ****' % (epoch, epoch_end_time - epoch_start_time, accumulated_loss()))
       writer.add_scalar('Average Training loss wrt epochs', accumulated_loss(), epoch)  
       
      
