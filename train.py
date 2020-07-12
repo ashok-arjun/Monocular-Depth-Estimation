@@ -18,7 +18,6 @@ from evaluate import evaluate
 
 # shift these to config files or inside the class later
 DATA_PATH = 'nyu_data.zip'
-NUM_EPOCHS = 1
 LEARNING_RATE = 1e-4
 
 
@@ -28,10 +27,11 @@ class Trainer():
     self.dataloaders = DataLoaders(data_path)  
     print('Data loaded!')
 
-  def train_and_evaluate(self, batch_size, checkpoint_file = None):
+  def train_and_evaluate(self, config, checkpoint_file = None):
     """
     TODO: log other values/images
     """
+    batch_size = config['batch_size']
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     train_dataloader = self.dataloaders.get_train_dataloader(batch_size = batch_size) # provide val batch size also
@@ -50,8 +50,6 @@ class Trainer():
 
     model.train()
 
-    # writer = SummaryWriter(comment = 'densenet121-bs-{}-lr-{}-epochs-{}'.format(batch_size, LEARNING_RATE, NUM_EPOCHS), flush_secs = 30)
-
     best_rmse = 9e20
     is_best = False
     best_test_rmse = 9e20
@@ -59,7 +57,7 @@ class Trainer():
     
     wandb_step = -1
 
-    for epoch in range(NUM_EPOCHS):
+    for epoch in range(config['epochs']):
       
       accumulated_loss = RunningAverage()
       accumulated_iteration_time = RunningAverage()
