@@ -41,7 +41,7 @@ class Trainer():
     model = model.to(device)
     
     optimizer = torch.optim.Adam(model.parameters(), LEARNING_RATE)
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = 5, gamma = 0.1)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = config['lr_scheduler_step_size'], gamma = 0.1)
 
     wandb.watch(model)
 
