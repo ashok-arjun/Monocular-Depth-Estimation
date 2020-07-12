@@ -5,6 +5,9 @@ add image comparison in tensorboard
 """
 import time
 import datetime
+import logging
+
+logging.basicConfig(filename='experiments/training_logs.log', filemode='w', format='%(asctime)s - %(message)s', level=logging.INFO)
 
 
 import numpy as np
@@ -22,7 +25,7 @@ from evaluate import evaluate
 
 # shift these to config files or inside the class later
 DATA_PATH = 'data/raw/nyu_data.zip'
-NUM_EPOCHS = 1
+NUM_EPOCHS = 9
 LEARNING_RATE = 1e-4
 
 
@@ -30,7 +33,7 @@ class Trainer():
   def __init__(self):
     self.dataloaders = DataLoaders(DATA_PATH)  
 
-  def train_and_evaluate(self, batch_size):
+  def train_and_evaluate(self, batch_size, checkpoint_file = None):
     """
     TODO: log other values/images
     """
@@ -41,10 +44,14 @@ class Trainer():
 
     model = DenseDepth()
     model = model.to(device)
-    model.train()
     optimizer = torch.optim.Adam(model.parameters(), LEARNING_RATE)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = 5, gamma = 0.1)
 
-    # lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = 200, gamma = 0.1)
+    if checkpoint_file:
+      load_checkpoint(checkpoint_file, model, optimizer)
+
+    model.train()
+
     writer = SummaryWriter(comment = 'densenet121-bs-{}-lr-{}-epochs-{}'.format(batch_size, LEARNING_RATE, NUM_EPOCHS), flush_secs = 30)
 
     best_rmse = 9e20
@@ -124,11 +131,13 @@ class Trainer():
 
           is_best_test = False
           is_best = False
+          logging.info('Iteration %d complete' % (net_iteration_number))
+
                                
 
       epoch_end_time = time.time()
-      # print('****Epoch: %d ; epoch_time: %f ; av_loss: %f ****' % (epoch, epoch_end_time - epoch_start_time, accumulated_loss()))
-      writer.add_scalar('Average Training loss wrt epochs', accumulated_loss(), epoch)  
+      writer.add_scalar('Average Training loss wrt epochs', str(accumulated_loss().item()), epoch) 
+      lr_scheduler.step() 
       
      
 
