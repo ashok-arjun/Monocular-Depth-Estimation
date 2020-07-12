@@ -7,7 +7,7 @@ import time
 import datetime
 import logging
 
-logging.basicConfig(filename='experiments/training_logs.log', filemode='w', format='%(asctime)s - %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
 
 import numpy as np
@@ -16,6 +16,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.utils as vutils # contains useful functions like make_grid
 from torch.utils.tensorboard import SummaryWriter
+import wandb
 
 
 from model.net import DenseDepth, evaluate_predictions, combined_loss 
