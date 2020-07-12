@@ -30,8 +30,8 @@ LEARNING_RATE = 1e-4
 
 
 class Trainer():
-  def __init__(self):
-    self.dataloaders = DataLoaders(DATA_PATH)  
+  def __init__(self, data_path = DATA_PATH):
+    self.dataloaders = DataLoaders(data_path)  
 
   def train_and_evaluate(self, batch_size, checkpoint_file = None):
     """
