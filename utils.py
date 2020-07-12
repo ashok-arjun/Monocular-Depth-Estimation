@@ -9,14 +9,19 @@ import torch
 def plot_color(ax, color, title="Color"):
 
     ax.axis('off')
-    ax.set_title(title)
+    ax.title(title)
     ax.imshow(color)
+
+    return ax
 
 def plot_depth(ax, depth, title="Depth"):
     
     ax.axis('off')
-    ax.set_title(title)
+    ax.title(title)
     ax.imshow(depth, cmap = 'jet')
+
+    return ax
+
 
 def plot_sample_tensor(img, depth):
   """
@@ -29,13 +34,37 @@ def plot_sample_tensor(img, depth):
   img = Image.fromarray(img.astype(np.uint8), mode = 'RGB')
   depth = Image.fromarray(depth.astype(np.uint8)[:,:,0], mode='L')
 
-  fig = plt.figure("Sample", figsize=(12, 5))
+  fig = plt.figure("Example", figsize=(12, 5))
 
   ax = fig.add_subplot(1, 2, 1)
   plot_color(ax, img)
 
   ax = fig.add_subplot(1, 2, 2)
   plot_depth(ax, depth)
+
+  return ax
+
+def plot_predicted_deviation(predicted_depth, true_depth):
+  """
+  Accepts Torch tensors and plots them 
+  """
+  predicted_depth = (predicted_depth.cpu().numpy().transpose(1,2,0) / 1000) * 255
+  true_depth = (true_depth.cpu().numpy().transpose(1,2,0) / 1000) * 255
+
+  diff = predicted_depth - true_depth
+
+  predicted_depth = Image.fromarray(predicted_depth.astype(np.uint8)[:,:,0], mode='L')
+  diff = Image.fromarray(diff.astype(np.uint8)[:,:,0], mode='L')
+
+  fig = plt.figure("Example", figsize=(12, 5))
+
+  ax = fig.add_subplot(1, 2, 1)
+  plot_depth(ax, predicted_depth, title = 'Predicted depth')
+
+  ax = fig.add_subplot(1, 2, 2)
+  plot_depth(ax, diff, title='Difference')
+
+  return ax  
 
 def plot_sample_image(img, depth):
 
@@ -46,6 +75,26 @@ def plot_sample_image(img, depth):
 
   ax = fig.add_subplot(1, 2, 2)
   plot_depth(ax, depth)
+
+
+def plot_batch_images(images):
+  plots = []
+
+  for img in images:
+    img = img.cpu().numpy().transpose(1,2,0) * 255
+    img = Image.fromarray(img.astype(np.uint8), mode = 'RGB')
+    plots.append(img)
+
+  return plots  
+
+def plot_batch_depths(depths):
+  plots = []
+  for depth in depths:
+    depth = (depth.cpu().numpy().transpose(1,2,0) / 1000) * 255
+    depth = Image.fromarray(depth.astype(np.uint8)[:,:,0], mode='L')
+    plots.append(depth)  
+
+  return plots 
 
 
 class RunningAverage():

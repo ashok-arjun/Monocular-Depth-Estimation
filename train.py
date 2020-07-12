@@ -18,13 +18,15 @@ from evaluate import evaluate
 
 # shift these to config files or inside the class later
 DATA_PATH = 'nyu_data.zip'
-NUM_EPOCHS = 9
+NUM_EPOCHS = 1
 LEARNING_RATE = 1e-4
 
 
 class Trainer():
   def __init__(self, data_path = DATA_PATH):
+    print('Loading data...')
     self.dataloaders = DataLoaders(data_path)  
+    print('Data loaded!')
 
   def train_and_evaluate(self, batch_size, checkpoint_file = None):
     """
@@ -41,19 +43,21 @@ class Trainer():
     optimizer = torch.optim.Adam(model.parameters(), LEARNING_RATE)
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = 5, gamma = 0.1)
 
-    wandb.watch(model, log="all")
+    wandb.watch(model)
 
     if checkpoint_file:
       load_checkpoint(checkpoint_file, model, optimizer)
 
     model.train()
 
-    writer = SummaryWriter(comment = 'densenet121-bs-{}-lr-{}-epochs-{}'.format(batch_size, LEARNING_RATE, NUM_EPOCHS), flush_secs = 30)
+    # writer = SummaryWriter(comment = 'densenet121-bs-{}-lr-{}-epochs-{}'.format(batch_size, LEARNING_RATE, NUM_EPOCHS), flush_secs = 30)
 
     best_rmse = 9e20
     is_best = False
     best_test_rmse = 9e20
     is_best_test = False
+    
+    wandb_step = -1
 
     for epoch in range(NUM_EPOCHS):
       
@@ -62,6 +66,8 @@ class Trainer():
       epoch_start_time = time.time()
 
       for iteration, batch in enumerate(train_dataloader):
+
+        wandb_step += 1
 
         time_start = time.time()        
 
@@ -88,7 +94,7 @@ class Trainer():
         net_iteration_number = epoch * num_batches + iteration
 
         if iteration % 10 == 0: 
-          wandb.log({'Training loss': loss.item()})
+          wandb.log({'Training loss': loss.item()}, step = wandb_step)
           # writer.add_scalar('Training loss wrt iterations',loss, net_iteration_number)
 
         if iteration % 50 == 0:
@@ -100,12 +106,12 @@ class Trainer():
 
           print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s ; loss: %f (%f)' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta, loss.item(), accumulated_loss()))
           metrics = evaluate_predictions(predictions, depths)
-          self.write_metrics(metrics,train = True)
+          self.write_metrics(metrics, wandb_step = wandb_step, train = True)
 
           test_images, test_depths, test_preds, test_loss, test_metrics = evaluate(model, self.dataloaders.get_val_dataloader, batch_size = 2) ; model.train() # evaluate(in model.eval()) and back to train
-          # self.compare_predictions(test_images, test_depths, test_preds)
-          wandb.log({'Validation loss on random batch':test_loss.item()})
-          self.write_metrics(test_metrics, train = False)
+          self.compare_predictions(test_images, test_depths, test_preds, wandb_step)
+          wandb.log({'Validation loss on random batch':test_loss.item()}, step = wandb_step)
+          self.write_metrics(test_metrics, wandb_step = wandb_step, train = False)
 
           if metrics['rmse'] < best_rmse: 
             best_rmse = metrics['rmse']
@@ -137,29 +143,34 @@ class Trainer():
 
       epoch_end_time = time.time()
       print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
-      wandb.log({'Average Training loss across epochs': accumulated_loss().item()}) 
+      wandb.log({'Average Training loss across epochs': accumulated_loss().item()}, step = wandb_step) 
       lr_scheduler.step() 
       
      
 
 
-  def write_metrics(self, metrics, train = True):
+  def write_metrics(self, metrics, wandb_step, train = True):
     if train:
       for key, value in metrics.items():
-        wandb.log({'Train '+key: value})
+        wandb.log({'Train '+key: value}, step = wandb_step)
     else:
       for key, value in metrics.items():
-        wandb.log({'Validation '+key: value}) 
+        wandb.log({'Validation '+key: value}, step = wandb_step) 
 
 
-  # def compare_predictions(self, images, depths, predictions):
-  # # Plots the image on Tensorboard along with its true depth and prediction depths, and the L1 loss image
+  def compare_predictions(self, images, depths, predictions, wandb_step):
+    image_plots = plot_batch_images(images)
+    depth_plots = plot_batch_depths(depths)
+    pred_plots = plot_batch_depths(predictions)
+    difference = plot_batch_depths(torch.abs(depths - predictions))
 
-  #   vis_depths = depths/1000 * 255
-  #   vis_preds = predictions/1000 * 255
-  #   writer.add_image('Image', vutils.make_grid(images, nrow = 2), net_iteration_number)
-  #   writer.add_image('True depth', vutils.make_grid(vis_depths, nrow = 2), net_iteration_number)
-  #   writer.add_image('Predicted depth', vutils.make_grid(vis_preds, nrow = 2), net_iteration_number)
-  #   writer.add_image('L1 loss', vutils.make_grid(torch.abs(vis_depths - vis_depths), nrow = 2), net_iteration_number)
+    wandb.log({"Sample Validation images": [wandb.Image(image_plot) for image_plot in image_plots]}, step = wandb_step)
+    wandb.log({"Sample Validation depths": [wandb.Image(image_plot) for image_plot in depth_plots]}, step = wandb_step)
+    wandb.log({"Sample Validation predictions": [wandb.Image(image_plot) for image_plot in pred_plots]}, step = wandb_step)
+    wandb.log({"Sample Validation differences": [wandb.Image(image_plot) for image_plot in difference]}, step = wandb_step)  
+
+
+
+    
 
 
