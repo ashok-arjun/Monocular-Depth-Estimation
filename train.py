@@ -24,7 +24,7 @@ from utils import *
 from evaluate import evaluate
 
 # shift these to config files or inside the class later
-DATA_PATH = 'nyu_data.zip'
+DATA_PATH = 'data/raw/nyu_data.zip'
 NUM_EPOCHS = 9
 LEARNING_RATE = 1e-4
 
