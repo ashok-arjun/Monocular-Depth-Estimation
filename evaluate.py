@@ -22,8 +22,7 @@ def evaluate(model, dataloader_getter, batch_size):
   
   with torch.no_grad():
     predictions = model(images)
-
-  loss = combined_loss(predictions, depths)
-  metrics = evaluate_predictions(predictions, depths)
+    loss = combined_loss(predictions, depths)
+    metrics = evaluate_predictions(predictions, depths)
 
   return images, depths, predictions, loss, metrics
