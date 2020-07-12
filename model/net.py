@@ -115,7 +115,7 @@ def evaluate_predictions(predictions, truth):
   relative_error = torch.mean(torch.abs(predictions - truth)/truth)
   rmse = torch.sqrt(mean_l2_loss(predictions, truth))
   log10_error = torch.mean(torch.abs(torch.log10(predictions) - torch.log10(truth)))
-  return {'d1_error':d1, 'd2_error':d2, 'd3_error':d3, 'rel_err':relative_error, 'rmse':rmse, 'log10_error':log10_error}
+  return {'d1_accuracy':d1, 'd2_accuracy':d2, 'd3_accuracy':d3, 'relative_err':relative_error, 'rmse':rmse, 'log10_error':log10_error}
 
 """
 LOSSES

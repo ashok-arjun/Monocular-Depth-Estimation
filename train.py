@@ -1,14 +1,6 @@
-"""
-TODO: 
-change metrics to test metrics
-add image comparison in tensorboard
-"""
 import time
 import datetime
-import logging
-
-logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
-
+import pytz  
 
 import numpy as np
 import torch 
@@ -45,8 +37,11 @@ class Trainer():
 
     model = DenseDepth()
     model = model.to(device)
+    
     optimizer = torch.optim.Adam(model.parameters(), LEARNING_RATE)
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = 5, gamma = 0.1)
+
+    wandb.watch(model, log="all")
 
     if checkpoint_file:
       load_checkpoint(checkpoint_file, model, optimizer)
@@ -93,22 +88,24 @@ class Trainer():
         net_iteration_number = epoch * num_batches + iteration
 
         if iteration % 10 == 0: 
-          writer.add_scalar('Training loss wrt iterations',loss, net_iteration_number)
+          wandb.log({'Training loss': loss.item()})
+          # writer.add_scalar('Training loss wrt iterations',loss, net_iteration_number)
 
-        if iteration % 200 == 0:
+        if iteration % 50 == 0:
 
-          writer.add_text('eta',eta, net_iteration_number)
-          writer.add_text('loss',str(loss.item()), net_iteration_number)
-          writer.add_text('avg loss',str(accumulated_loss().item()), net_iteration_number)
+          
+          # writer.add_text('eta',eta, net_iteration_number)
+          # writer.add_text('loss',str(loss.item()), net_iteration_number)
+          # writer.add_text('avg loss',str(accumulated_loss().item()), net_iteration_number)
 
-          # print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s ; loss: %f (%f)' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta, loss, accumulated_loss()))
+          print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s ; loss: %f (%f)' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta, loss.item(), accumulated_loss()))
           metrics = evaluate_predictions(predictions, depths)
-          self.write_metrics(writer, metrics, net_iteration_number, train = True)
+          self.write_metrics(metrics,train = True)
 
           test_images, test_depths, test_preds, test_loss, test_metrics = evaluate(model, self.dataloaders.get_val_dataloader, batch_size = 2) ; model.train() # evaluate(in model.eval()) and back to train
-          self.compare_predictions(writer, test_images, test_depths, test_preds, net_iteration_number)
-          writer.add_scalar('Val loss on one random batch wrt iterations',test_loss, net_iteration_number)
-          self.write_metrics(writer, test_metrics, net_iteration_number, train = False)
+          # self.compare_predictions(test_images, test_depths, test_preds)
+          wandb.log({'Validation loss on random batch':test_loss.item()})
+          self.write_metrics(test_metrics, train = False)
 
           if metrics['rmse'] < best_rmse: 
             best_rmse = metrics['rmse']
@@ -132,34 +129,37 @@ class Trainer():
 
           is_best_test = False
           is_best = False
-          logging.info('Iteration %d complete' % (net_iteration_number))
+
+        print(datetime.datetime.now(pytz.timezone('Asia/Kolkata')), end = ' ')
+        print('Epoch %d[%d/%d] complete' % (epoch, iteration, num_batches))
 
                                
 
       epoch_end_time = time.time()
-      writer.add_scalar('Average Training loss wrt epochs', str(accumulated_loss().item()), epoch) 
+      print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
+      wandb.log({'Average Training loss across epochs': accumulated_loss().item()}) 
       lr_scheduler.step() 
       
      
 
 
-  def write_metrics(self, writer, metrics, iteration_num, train = True):
+  def write_metrics(self, metrics, train = True):
     if train:
       for key, value in metrics.items():
-        writer.add_scalar('Train_'+key, value, iteration_num)
+        wandb.log({'Train '+key: value})
     else:
       for key, value in metrics.items():
-        writer.add_scalar('Val_'+key, value, iteration_num) 
+        wandb.log({'Validation '+key: value}) 
 
 
-  def compare_predictions(self, writer, images, depths, predictions, net_iteration_number):
-  # Plots the image on Tensorboard along with its true depth and prediction depths, and the L1 loss image
+  # def compare_predictions(self, images, depths, predictions):
+  # # Plots the image on Tensorboard along with its true depth and prediction depths, and the L1 loss image
 
-    vis_depths = depths/1000 * 255
-    vis_preds = predictions/1000 * 255
-    writer.add_image('Image', vutils.make_grid(images, nrow = 2), net_iteration_number)
-    writer.add_image('True depth', vutils.make_grid(vis_depths, nrow = 2), net_iteration_number)
-    writer.add_image('Predicted depth', vutils.make_grid(vis_preds, nrow = 2), net_iteration_number)
-    writer.add_image('L1 loss', vutils.make_grid(torch.abs(vis_depths - vis_depths), nrow = 2), net_iteration_number)
+  #   vis_depths = depths/1000 * 255
+  #   vis_preds = predictions/1000 * 255
+  #   writer.add_image('Image', vutils.make_grid(images, nrow = 2), net_iteration_number)
+  #   writer.add_image('True depth', vutils.make_grid(vis_depths, nrow = 2), net_iteration_number)
+  #   writer.add_image('Predicted depth', vutils.make_grid(vis_preds, nrow = 2), net_iteration_number)
+  #   writer.add_image('L1 loss', vutils.make_grid(torch.abs(vis_depths - vis_depths), nrow = 2), net_iteration_number)
 
 
