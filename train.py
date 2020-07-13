@@ -90,6 +90,8 @@ class Trainer():
         net_iteration_number = epoch * num_batches + iteration
 
         if iteration % config['training_loss_log_interval'] == 0: 
+          print(datetime.datetime.now(pytz.timezone('Asia/Kolkata')), end = ' ')
+          print('Epoch %d[%d/%d] complete' % (epoch, iteration, num_batches))
           wandb.log({'Training loss': loss.item()}, step = wandb_step)
           # writer.add_scalar('Training loss wrt iterations',loss, net_iteration_number)
 
@@ -131,9 +133,15 @@ class Trainer():
 
           is_best_test = False
           is_best = False
-
-        print(datetime.datetime.now(pytz.timezone('Asia/Kolkata')), end = ' ')
-        print('Epoch %d[%d/%d] complete' % (epoch, iteration, num_batches))
+          
+          del test_images
+          del test_depths
+          del test_preds
+          
+        del predictions
+        del depths
+        del images
+  
 
                                
 
@@ -141,6 +149,7 @@ class Trainer():
       print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
       wandb.log({'Average Training loss across epochs': accumulated_loss().item()}, step = wandb_step) 
       lr_scheduler.step() 
+      torch.cuda.empty_cache()
       
      
 
@@ -163,7 +172,12 @@ class Trainer():
     wandb.log({"Sample Validation images": [wandb.Image(image_plot) for image_plot in image_plots]}, step = wandb_step)
     wandb.log({"Sample Validation depths": [wandb.Image(image_plot) for image_plot in depth_plots]}, step = wandb_step)
     wandb.log({"Sample Validation predictions": [wandb.Image(image_plot) for image_plot in pred_plots]}, step = wandb_step)
-    wandb.log({"Sample Validation differences": [wandb.Image(image_plot) for image_plot in difference]}, step = wandb_step)  
+    wandb.log({"Sample Validation differences": [wandb.Image(image_plot) for image_plot in difference]}, step = wandb_step)
+    
+    del image_plots
+    del depth_plots
+    del pred_plots
+    del difference
 
 
 
