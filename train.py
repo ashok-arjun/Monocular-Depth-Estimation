@@ -18,8 +18,6 @@ from evaluate import evaluate
 
 # shift these to config files or inside the class later
 DATA_PATH = 'nyu_data.zip'
-LEARNING_RATE = 1e-4
-
 
 class Trainer():
   def __init__(self, data_path = DATA_PATH):
@@ -40,7 +38,7 @@ class Trainer():
     model = DenseDepth()
     model = model.to(device)
     
-    optimizer = torch.optim.Adam(model.parameters(), LEARNING_RATE)
+    optimizer = torch.optim.Adam(model.parameters(), config['lr'])
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = config['lr_scheduler_step_size'], gamma = 0.1)
 
     wandb.watch(model)
@@ -91,11 +89,11 @@ class Trainer():
 
         net_iteration_number = epoch * num_batches + iteration
 
-        if iteration % 10 == 0: 
+        if iteration % config['training_loss_log_interval'] == 0: 
           wandb.log({'Training loss': loss.item()}, step = wandb_step)
           # writer.add_scalar('Training loss wrt iterations',loss, net_iteration_number)
 
-        if iteration % 50 == 0:
+        if iteration % config['other_metrics_log_interval'] == 0:
 
           
           # writer.add_text('eta',eta, net_iteration_number)
@@ -106,7 +104,7 @@ class Trainer():
           metrics = evaluate_predictions(predictions, depths)
           self.write_metrics(metrics, wandb_step = wandb_step, train = True)
 
-          test_images, test_depths, test_preds, test_loss, test_metrics = evaluate(model, self.dataloaders.get_val_dataloader, batch_size = 2) ; model.train() # evaluate(in model.eval()) and back to train
+          test_images, test_depths, test_preds, test_loss, test_metrics = evaluate(model, self.dataloaders.get_val_dataloader, batch_size = config['test_batch_size']) ; model.train() # evaluate(in model.eval()) and back to train
           self.compare_predictions(test_images, test_depths, test_preds, wandb_step)
           wandb.log({'Validation loss on random batch':test_loss.item()}, step = wandb_step)
           self.write_metrics(test_metrics, wandb_step = wandb_step, train = False)
