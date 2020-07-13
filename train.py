@@ -41,6 +41,9 @@ class Trainer():
     optimizer = torch.optim.Adam(model.parameters(), config['lr'])
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = config['lr_scheduler_step_size'], gamma = 0.1)
 
+    for i in range(config['done_epochs']):
+      lr_scheduler.step() # step the scheduler for the already done epochs 
+    
     wandb.watch(model)
 
     if wandb.run.resumed:
