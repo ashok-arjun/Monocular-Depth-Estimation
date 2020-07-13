@@ -1,7 +1,9 @@
 /runs/*
 /experiments/*
 /__pycache__/*
+/wandb/*
 *.mat
 *.zip
 *.pyc
-
+*.log
+settings

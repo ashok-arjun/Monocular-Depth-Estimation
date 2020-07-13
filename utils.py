@@ -4,6 +4,7 @@ from PIL import Image
 import os 
 import shutil
 import torch
+import wandb
 
 
 def plot_color(ax, color, title="Color"):
@@ -110,7 +111,7 @@ class RunningAverage():
     return self.sum/self.count  
 
 
-def save_checkpoint(state, is_best, checkpoint_dir):
+def save_checkpoint(state, is_best, checkpoint_dir, train = True):
     """Saves model and training parameters at checkpoint + 'last.pth.tar'. If is_best==True, also saves
     checkpoint + 'best.pth.tar'
     Args:
@@ -118,10 +119,14 @@ def save_checkpoint(state, is_best, checkpoint_dir):
         is_best: (bool) True if it is the best model seen till now
         checkpoint: (string) folder where parameters are to be saved
     """
-    filepath = os.path.join(checkpoint_dir, 'last.pth.tar')
-    torch.save(state, filepath)
+    prefix = 'train' if train else 'test'
+    torch.save(state, os.path.join(checkpoint_dir, prefix + '_last.pth.tar'))
+    torch.save(state, os.path.join(wandb.run.dir, prefix + "_last.pth.tar"))
+    wandb.save(prefix + '_last.pth.tar')
     if is_best:
-        shutil.copyfile(filepath, os.path.join(checkpoint_dir, 'best.pth.tar'))
+        torch.save(state, os.path.join(checkpoint_dir, prefix + '_best.pth.tar'))
+        torch.save(state, os.path.join(wandb.run.dir, prefix + "_best.pth.tar"))
+        wandb.save(prefix + '_best.pth.tar')
 
 def load_checkpoint(checkpoint, model, optimizer=None):
     """Loads model parameters (state_dict) from file_path. If optimizer is provided, loads state_dict of

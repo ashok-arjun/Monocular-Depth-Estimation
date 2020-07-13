@@ -119,7 +119,7 @@ class Trainer():
                           'state_dict': model.state_dict(), 
                           'optim_dict': optimizer.state_dict()},
                           is_best = is_best,
-                          checkpoint_dir = 'experiments/train')
+                          checkpoint_dir = 'experiments/', train = True)
 
           if test_metrics['rmse'] < best_test_rmse: 
             best_test_rmse = test_metrics['rmse']
@@ -129,7 +129,7 @@ class Trainer():
                           'state_dict': model.state_dict(), 
                           'optim_dict': optimizer.state_dict()},
                           is_best = is_best_test,
-                          checkpoint_dir = 'experiments/test') 
+                          checkpoint_dir = 'experiments/', train = False) 
 
           is_best_test = False
           is_best = False

@@ -39,7 +39,7 @@ class Bridge(nn.Sequential):
 class Encoder(nn.Module):
   def __init__(self):
     super(Encoder, self).__init__()
-    self.backbone = torchvision.models.densenet121(pretrained = True)
+    self.backbone = torchvision.models.densenet121(pretrained = True, progress = False)
 
   def forward(self, images):
     """
