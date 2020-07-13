@@ -32,7 +32,7 @@ class Trainer():
     batch_size = config['batch_size']
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    train_dataloader = self.dataloaders.get_train_dataloader(batch_size = batch_size) # provide val batch size also
+    train_dataloader = self.dataloaders.get_train_dataloader(batch_size = batch_size) 
     num_batches = len(train_dataloader)
 
     model = DenseDepth()
@@ -43,17 +43,16 @@ class Trainer():
 
     wandb.watch(model)
 
-    if checkpoint_file:
-      load_checkpoint(checkpoint_file, model, optimizer)
+    if wandb.run.resumed:
+      load_checkpoint(wandb.restore("train_last.pth.tar").name, model, optimizer)
 
     model.train()
 
     best_rmse = 9e20
     is_best = False
     best_test_rmse = 9e20
-    is_best_test = False
     
-    wandb_step = -1
+    wandb_step = config['done_epochs'] * num_batches -1 # set it to the number of iterations done
 
     for epoch in range(config['done_epochs'], config['epochs']):
       
@@ -86,21 +85,12 @@ class Trainer():
         accumulated_iteration_time.update(time_end - time_start)
         eta = str(datetime.timedelta(seconds = int(accumulated_iteration_time() * (num_batches - iteration))))
 
-
-        net_iteration_number = epoch * num_batches + iteration
-
         if iteration % config['training_loss_log_interval'] == 0: 
           print(datetime.datetime.now(pytz.timezone('Asia/Kolkata')), end = ' ')
-          print('Epoch %d[%d/%d] complete' % (epoch, iteration, num_batches))
+          print('At epoch %d[%d/%d]' % (epoch, iteration, num_batches))
           wandb.log({'Training loss': loss.item()}, step = wandb_step)
-          # writer.add_scalar('Training loss wrt iterations',loss, net_iteration_number)
 
         if iteration % config['other_metrics_log_interval'] == 0:
-
-          
-          # writer.add_text('eta',eta, net_iteration_number)
-          # writer.add_text('loss',str(loss.item()), net_iteration_number)
-          # writer.add_text('avg loss',str(accumulated_loss().item()), net_iteration_number)
 
           print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s ; loss: %f (%f)' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta, loss.item(), accumulated_loss()))
           metrics = evaluate_predictions(predictions, depths)
@@ -112,26 +102,20 @@ class Trainer():
           self.write_metrics(test_metrics, wandb_step = wandb_step, train = False)
 
           if metrics['rmse'] < best_rmse: 
+            wandb.run.summary["best_train_rmse"] = metrics['rmse']
             best_rmse = metrics['rmse']
             is_best = True
 
-          save_checkpoint({'iteration':net_iteration_number, 
+          save_checkpoint({'iteration': wandb_step, 
                           'state_dict': model.state_dict(), 
                           'optim_dict': optimizer.state_dict()},
                           is_best = is_best,
                           checkpoint_dir = 'experiments/', train = True)
 
-          if test_metrics['rmse'] < best_test_rmse: 
+          if test_metrics['rmse'] < best_test_rmse:
+            wandb.run.summary["best_test_rmse"] = test_metrics['rmse'] 
             best_test_rmse = test_metrics['rmse']
-            is_best_test = True
 
-          save_checkpoint({'iteration':net_iteration_number, 
-                          'state_dict': model.state_dict(), 
-                          'optim_dict': optimizer.state_dict()},
-                          is_best = is_best_test,
-                          checkpoint_dir = 'experiments/', train = False) 
-
-          is_best_test = False
           is_best = False
           
           del test_images
