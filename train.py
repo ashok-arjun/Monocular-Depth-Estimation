@@ -55,7 +55,7 @@ class Trainer():
     
     wandb_step = -1
 
-    for epoch in range(config['epochs']):
+    for epoch in range(config['done_epochs'], config['epochs']):
       
       accumulated_loss = RunningAverage()
       accumulated_iteration_time = RunningAverage()
