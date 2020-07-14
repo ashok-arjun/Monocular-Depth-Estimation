@@ -147,6 +147,6 @@ def load_checkpoint(checkpoint, model, optimizer=None):
     return checkpoint
 
 def save_epoch(state):
-    prefix = state['epoch']
+    prefix = str(state['epoch'])
     torch.save(state, os.path.join(wandb.run.dir, 'epoch_' + prefix + ".pth.tar"))
     wandb.save('epoch_' + prefix + ".pth.tar")
