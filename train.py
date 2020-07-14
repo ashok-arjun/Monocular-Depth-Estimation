@@ -141,9 +141,8 @@ class Trainer():
       lr_scheduler.step() 
       torch.cuda.empty_cache()
       
-      save_epoch({'epoch': epoch, 
-                  'state_dict': model.state_dict(), 
-                  'optim_dict': optimizer.state_dict()})
+      save_epoch({'state_dict': model.state_dict(), 
+                  'optim_dict': optimizer.state_dict()}, epoch_index = epoch)
       
      
 
