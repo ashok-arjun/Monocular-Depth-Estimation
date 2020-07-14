@@ -25,7 +25,7 @@ class Trainer():
     self.dataloaders = DataLoaders(data_path)  
     print('Data loaded!')
 
-  def train_and_evaluate(self, config, checkpoint_file = "train_last.pth.tar"):
+  def train_and_evaluate(self, config, checkpoint_file, local):
     """
     TODO: log other values/images
     """
@@ -47,7 +47,10 @@ class Trainer():
     wandb.watch(model)
 
     if wandb.run.resumed:
-      load_checkpoint(wandb.restore(checkpoint_file).name, model, optimizer)
+      if local:
+        load_checkpoint(checkpoint_file, model, optimizer)
+      else:  
+        load_checkpoint(wandb.restore(checkpoint_file).name, model, optimizer)
 
     model.train()
 
