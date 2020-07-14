@@ -129,9 +129,7 @@ class Trainer():
         del depths
         del images
         
-        save_epoch({'epoch': epoch, 
-                    'state_dict': model.state_dict(), 
-                    'optim_dict': optimizer.state_dict()})
+        
         
  
 
@@ -142,6 +140,10 @@ class Trainer():
       wandb.log({'Average Training loss across iters': accumulated_loss().item()}, step = wandb_step) 
       lr_scheduler.step() 
       torch.cuda.empty_cache()
+      
+      save_epoch({'epoch': epoch, 
+                  'state_dict': model.state_dict(), 
+                  'optim_dict': optimizer.state_dict()})
       
      
 
