@@ -41,7 +41,7 @@ class Trainer():
     optimizer = torch.optim.Adam(model.parameters(), config['lr'])
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = config['lr_scheduler_step_size'], gamma = 0.1)
 
-    for i in range(config['done_epochs']):
+    for i in range(config['start_epoch']):
       lr_scheduler.step() # step the scheduler for the already done epochs 
     
     wandb.watch(model)
@@ -55,9 +55,9 @@ class Trainer():
     is_best = False
     best_test_rmse = 9e20
     
-    wandb_step = config['done_epochs'] * num_batches -1 # set it to the number of iterations done
+    wandb_step = config['start_epoch'] * num_batches -1 # set it to the number of iterations done
 
-    for epoch in range(config['done_epochs'], config['epochs']):
+    for epoch in range(config['start_epoch'], config['epochs']):
       
       accumulated_loss = RunningAverage()
       accumulated_iteration_time = RunningAverage()
@@ -128,13 +128,18 @@ class Trainer():
         del predictions
         del depths
         del images
-  
+        
+        save_epoch({'epoch': epoch, 
+                    'state_dict': model.state_dict(), 
+                    'optim_dict': optimizer.state_dict()})
+        
+ 
 
                                
 
       epoch_end_time = time.time()
       print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
-      wandb.log({'Average Training loss across epochs': accumulated_loss().item()}, step = wandb_step) 
+      wandb.log({'Average Training loss across epochs': accumulated_loss().item()}, step = epoch) 
       lr_scheduler.step() 
       torch.cuda.empty_cache()
       
