@@ -150,6 +150,5 @@ def save_epoch(state, epoch_index):
     prefix = str(epoch_index)
     print('Trying to save epoch', prefix)
     torch.save(state, os.path.join(wandb.run.dir, 'epoch_' + prefix + ".pth.tar"))
-    print('Epoch saved: ', prefix)
-
-#     wandb.save('epoch_' + prefix + ".pth.tar")
+    print('Epoch saved to cloud: ', prefix)
+    wandb.save('epoch_' + prefix + ".pth.tar")
