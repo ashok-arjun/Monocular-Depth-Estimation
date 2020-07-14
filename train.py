@@ -139,7 +139,7 @@ class Trainer():
 
       epoch_end_time = time.time()
       print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
-      wandb.log({'Average Training loss across epochs': accumulated_loss().item()}, step = epoch) 
+      wandb.log({'Average Training loss across iters': accumulated_loss().item()}, step = wandb_step) 
       lr_scheduler.step() 
       torch.cuda.empty_cache()
       
