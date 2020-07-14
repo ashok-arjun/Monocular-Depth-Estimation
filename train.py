@@ -46,17 +46,21 @@ class Trainer():
     
     wandb.watch(model)
 
+    best_rmse = 9e20
+    is_best = False
+    best_test_rmse = 9e20
+    
     if wandb.run.resumed:
       if local:
         load_checkpoint(checkpoint_file, model, optimizer)
       else:  
         load_checkpoint(wandb.restore(checkpoint_file).name, model, optimizer)
+      best_rmse = wandb.run.summary["best_train_rmse"]
+      best_test_rmse = wandb.run.summary["best_test_rmse"]
 
     model.train()
 
-    best_rmse = 9e20
-    is_best = False
-    best_test_rmse = 9e20
+    
     
     wandb_step = config['start_epoch'] * num_batches -1 # set it to the number of iterations done
 
