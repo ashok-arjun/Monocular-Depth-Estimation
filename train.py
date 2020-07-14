@@ -52,12 +52,17 @@ class Trainer():
     
     if wandb.run.resumed:
       if local:
+        print('Loading checkpoint from local storage:',checkpoint_file)
         load_checkpoint(checkpoint_file, model, optimizer)
+        print('Loaded checkpoint from local storage:',checkpoint_file)
       else:  
+        print('Loading checkpoint from cloud storage:',checkpoint_file)
         load_checkpoint(wandb.restore(checkpoint_file).name, model, optimizer)
-      best_rmse = wandb.run.summary["best_train_rmse"]
-      best_test_rmse = wandb.run.summary["best_test_rmse"]
+        print('Loaded checkpoint from local storage:',checkpoint_file)
+        best_rmse = wandb.run.summary["best_train_rmse"]
+        best_test_rmse = wandb.run.summary["best_test_rmse"]
 
+    print('Training...')    
     model.train()
 
     
