@@ -10,7 +10,7 @@ import wandb
 def plot_color(ax, color, title="Color"):
 
     ax.axis('off')
-    ax.title(title)
+    # ax.title(title)
     ax.imshow(color)
 
     return ax
@@ -18,7 +18,7 @@ def plot_color(ax, color, title="Color"):
 def plot_depth(ax, depth, title="Depth"):
     
     ax.axis('off')
-    ax.title(title)
+    # ax.title(title)
     ax.imshow(depth, cmap = 'jet')
 
     return ax
