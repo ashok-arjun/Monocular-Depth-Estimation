@@ -4,6 +4,8 @@ import torch
 from model.net import evaluate_predictions, combined_loss
 from utils import RunningAverage
 
+from torch.nn import Upsample
+
 class AverageMetrics:
   def __init__(self):
     self.d1_accuracy = RunningAverage()
@@ -34,7 +36,7 @@ def evaluate_full(model, dataloader_getter, config):
   Evaluates for one complete epoch, averages and returns the loss and metrics
   Two ways:
   1. Compare the validation set with the downsampled outputs, and calculate loss, metrics 
-  2. Compare validation set depths with bilinearly upsampled output depths, calculate loss and metricsz
+  2. Compare validation set depths with bilinearly upsampled output depths, calculate loss and metrics
   """ 
   batch_size = config['test_batch_size']
   print_every = config['test_metrics_log_interval']
@@ -100,6 +102,50 @@ def evaluate(model, dataloader_getter, batch_size):
 
   return images, depths, predictions, loss, metrics
 
+def evaluate_list(model, samples, crop, batch_size):
+  """
+  Evaluates on the test data(with the eigen crop)
+  """
+  device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+  model = model.to(device)
+  model.eval()
+  upsample_2x = Upsample(scale_factor = 2, mode = 'bilinear', align_corners = True) #TODO: try without aligning the corners
 
+  all_predictions = []
+  all_depths = []
+
+  with torch.no_grad():
+
+    for i in range(0,len(samples),batch_size):
+      batch_samples = samples[i:i+batch_size]
+      images = torch.stack([bs['img'] for bs in batch_samples])
+      depths = torch.stack([bs['depth'] for bs in batch_samples])
+
+      images = torch.autograd.Variable(images.to(device))
+      depths = torch.autograd.Variable(depths.to(device))
+
+      # our output should be 2x bilinearly upsampled to compare with the true depth
+      # TODO: try learning the upsampling(upconv)
+      # TODO: try averaging mirror prediction's mirror and current prediction
+      
+      predictions = model(images)
+      predictions = upsample_2x(predictions)
+
+      predictions = predictions[:, :, crop[0]:crop[1]+1, crop[2]:crop[3]+1]
+      depths = depths[:, :, crop[0]:crop[1]+1, crop[2]:crop[3]+1]
+
+      all_predictions.append(predictions)
+      all_depths.append(depths)
+    # END FOR
+
+    all_predictions = torch.stack(all_predictions)
+    all_predictions = all_predictions.view(-1,all_predictions.shape[2],all_predictions.shape[3],all_predictions.shape[4],)
+    all_depths = torch.stack(all_depths)
+    all_depths = all_depths.view(-1,all_depths.shape[2],all_depths.shape[3],all_depths.shape[4],)
+
+    loss = combined_loss(all_predictions, all_depths)
+    metrics = evaluate_predictions(all_predictions, all_depths)
+
+    return loss, metrics
 
 

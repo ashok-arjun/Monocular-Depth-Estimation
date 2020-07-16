@@ -23,7 +23,7 @@ def get_test_data(path):
   crop = np.load(BytesIO(data['eigen_test_crop.npy'])) 
   depth = np.clip(depth, 1.0, 10.0) / 10 * 255 
 
-  # now, everything is in the range of 0 - 255
+  # now, everything is in the range of 0 - 255/0-255
   # convert to tensors of range 0-1/0-1000 
 
   toTensorFunc = ToTensor()
@@ -32,7 +32,7 @@ def get_test_data(path):
     img = Image.fromarray(rgb[i].astype(np.uint8), mode = 'RGB')
     img_depth = Image.fromarray(depth[i].astype(np.uint8)[:,:], mode='L')
     sample = {'img':img, 'depth':img_depth}
-    samples.append(toTensorFunc(sample))
+    samples.append(toTensorFunc(sample = sample, resize = False))
     
   return samples, torch.from_numpy(crop)    
 
@@ -71,11 +71,12 @@ class RandomChannelSwap(object):
 
 
 class ToTensor(object):
-  def __call__(self, sample, maxDepth = 1000.0):
+  def __call__(self, sample, maxDepth = 1000.0, resize = True):
     img, depth = sample['img'], sample['depth']
     img = self.to_torch(img)
 
-    depth = depth.resize((320, 240)) # wxh,   TODO:modularise the shape  
+    if resize:
+      depth = depth.resize((320, 240)) # wxh,   TODO:modularise the shape  
 
 
     depth = self.to_torch(depth).float() * maxDepth  
