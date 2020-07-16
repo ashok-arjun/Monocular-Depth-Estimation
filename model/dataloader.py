@@ -10,6 +10,33 @@ from io import BytesIO
 import random
 from itertools import permutations
 
+
+def get_test_data(path):
+  """
+  Returns all the torch tensors loading the image([0,1]), depth([0,1000]), eigen_crop(4 co-ordinates) of test data 
+  """
+  input_zip = ZipFile(path)
+  data = {name: input_zip.read(name) for name in input_zip.namelist()}
+
+  rgb = np.load(BytesIO(data['eigen_test_rgb.npy']))
+  depth = np.load(BytesIO(data['eigen_test_depth.npy']))
+  crop = np.load(BytesIO(data['eigen_test_crop.npy'])) 
+  depth = np.clip(depth, 1.0, 10.0) / 10 * 255 
+
+  # now, everything is in the range of 0 - 255
+  # convert to tensors of range 0-1/0-1000 
+
+  toTensorFunc = ToTensor()
+  samples = []
+  for i in range(rgb.shape[0]):
+    img = Image.fromarray(rgb[i].astype(np.uint8), mode = 'RGB')
+    img_depth = Image.fromarray(depth[i].astype(np.uint8)[:,:], mode='L')
+    sample = {'img':img, 'depth':img_depth}
+    samples.append(toTensorFunc(sample))
+    
+  return samples, torch.from_numpy(crop)    
+
+
 class RandomHorizontalFlip(object):
   def __init__(self, prob = 0.5):
     self.prob = prob
@@ -57,10 +84,8 @@ class ToTensor(object):
 
   def to_torch(self, x):
     """
-    Takes a PIL Image, normalizes it to be between [0,1] and turns it into a Torch tensor C * H * W
+    Takes a PIL Image/numpy array, normalizes it to be between [0,1] and turns it into a Torch tensor C * H * W
     """  
-    if not isinstance(x, Image.Image):
-      raise TypeError('Not a PIL Image') 
     x_numpy = np.asarray(x, dtype = 'float32')
 
     x_torch = torch.from_numpy(x_numpy)
@@ -123,7 +148,6 @@ class NYUDepthDatasetRaw(torch.utils.data.Dataset):
 
     depth = Image.open(BytesIO(self.zip_file[sample[1]]))
 
-    #TODO: see if required to normalise the depth as maxDepth/depth
     datum = {'img': img, 'depth': depth}
     if self.transforms:
       datum = self.transforms(datum) # a composed set of transforms should be passed

@@ -4,9 +4,6 @@ import torch
 from model.net import evaluate_predictions, combined_loss
 from utils import RunningAverage
 
-import time
-import datetime
-
 class AverageMetrics:
   def __init__(self):
     self.d1_accuracy = RunningAverage()
