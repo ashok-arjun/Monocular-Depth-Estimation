@@ -124,14 +124,22 @@ def evaluate_list(model, samples, crop, batch_size):
       images = torch.autograd.Variable(images.to(device))
       depths = torch.autograd.Variable(depths.to(device))
 
-      # our output should be 2x bilinearly upsampled to compare with the true depth
       # TODO: try learning the upsampling(upconv)
       # TODO: try averaging mirror prediction's mirror and current prediction
       
-      predictions = model(images)
-      predictions = upsample_2x(predictions)
+      # without mirroring
+      predictions_unflipped = upsample_2x(model(images))
+      predictions_unflipped = predictions_unflipped[:, :, crop[0]:crop[1]+1, crop[2]:crop[3]+1]
 
-      predictions = predictions[:, :, crop[0]:crop[1]+1, crop[2]:crop[3]+1]
+      #mirroring
+      predictions_flipped = upsample_2x(model(torch.from_numpy(images.cpu().numpy()[:,:,:,::-1].copy()).to(device)))
+      predictions_from_flipped = torch.from_numpy(predictions_flipped.cpu().numpy()[:,:,:,::-1].copy()).to(device)
+      predictions_from_flipped = predictions_from_flipped[:, :, crop[0]:crop[1]+1, crop[2]:crop[3]+1]
+
+      # averaging them
+      predictions = 0.5 * predictions_unflipped + 0.5 * predictions_from_flipped
+
+      # eigen crop depth
       depths = depths[:, :, crop[0]:crop[1]+1, crop[2]:crop[3]+1]
 
       all_predictions.append(predictions)
@@ -139,13 +147,11 @@ def evaluate_list(model, samples, crop, batch_size):
     # END FOR
 
     all_predictions = torch.stack(all_predictions)
-    all_predictions = all_predictions.view(-1,all_predictions.shape[2],all_predictions.shape[3],all_predictions.shape[4],)
     all_depths = torch.stack(all_depths)
-    all_depths = all_depths.view(-1,all_depths.shape[2],all_depths.shape[3],all_depths.shape[4],)
 
-    loss = combined_loss(all_predictions, all_depths)
+    # loss = combined_loss(all_predictions, all_depths)
     metrics = evaluate_predictions(all_predictions, all_depths)
 
-    return loss, metrics
+    return metrics
 
 
