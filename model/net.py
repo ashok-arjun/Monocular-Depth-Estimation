@@ -107,7 +107,7 @@ class DenseDepthWithUpconvolution(nn.Module):
     self.densedepth_pretrained = pretrained_densedepth
     for param in self.densedepth_pretrained.parameters():
       param.requires_grad = False
-    self.upconv2x = nn.ConvTranspose2d(in_channels = 1, out_channels = 1, kernel_size = 5, stride = 2, padding = 2)  
+    self.upconv2x = nn.ConvTranspose2d(in_channels = 1, out_channels = 1, kernel_size = 5, stride = 2, padding = 2, output_padding = 1)  
 
   def forward(self, images):
     return self.upconv2x(self.densedepth_pretrained(images))
