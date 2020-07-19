@@ -100,6 +100,18 @@ class DenseDepth(nn.Module):
 
   def forward(self, images):
     return self.decoder(self.encoder(images))  
+
+class DenseDepthWithUpconvolution(nn.Module):
+  def __init__(self, pretrained_densedepth):
+    super(DenseDepthWithUpconvolution, self).__init__()
+    self.densedepth_pretrained = pretrained_densedepth
+    for param in densedepth_pretrained.parameters():
+      param.requires_grad = False
+    self.upconv2x = nn.ConvTranspose2d(in_channels = 1, out_channels = 1, kernel_size = 5, stride = 2, padding = 2)  
+
+  def forward(self, images):
+    return self.upconv2x(self.decoder(self.encoder(images)))
+    
 """
 METRICS
 """

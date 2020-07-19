@@ -132,16 +132,14 @@ def evaluate_list(model, samples, crop, batch_size):
       predictions_unflipped = predictions_unflipped[:, :, crop[0]:crop[1]+1, crop[2]:crop[3]+1]
 
       #mirroring
-      predictions_flipped = upsample_2x(model(torch.from_numpy(images.cpu().numpy()[:,:,:,::-1].copy()).to(device)))
-      predictions_from_flipped = torch.from_numpy(predictions_flipped.cpu().numpy()[:,:,:,::-1].copy()).to(device)
+      predictions_flipped = upsample_2x(model(torch.from_numpy(images.numpy()[:,:,:,::-1].copy())))
+      predictions_from_flipped = torch.from_numpy(predictions_flipped.numpy()[:,:,:,::-1].copy())
       predictions_from_flipped = predictions_from_flipped[:, :, crop[0]:crop[1]+1, crop[2]:crop[3]+1]
 
       # averaging them
       predictions = 0.5 * predictions_unflipped + 0.5 * predictions_from_flipped
 
-      # eigen crop depth
       depths = depths[:, :, crop[0]:crop[1]+1, crop[2]:crop[3]+1]
-
       all_predictions.append(predictions)
       all_depths.append(depths)
     # END FOR
@@ -149,9 +147,9 @@ def evaluate_list(model, samples, crop, batch_size):
     all_predictions = torch.stack(all_predictions)
     all_depths = torch.stack(all_depths)
 
-    # loss = combined_loss(all_predictions, all_depths)
+    loss = combined_loss(all_predictions, all_depths)
     metrics = evaluate_predictions(all_predictions, all_depths)
 
-    return metrics
+    return loss, metrics
 
 

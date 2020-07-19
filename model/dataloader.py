@@ -71,13 +71,9 @@ class RandomChannelSwap(object):
 
 
 class ToTensor(object):
-  def __call__(self, sample, maxDepth = 1000.0, resize = True):
+  def __call__(self, sample, maxDepth = 1000.0):
     img, depth = sample['img'], sample['depth']
     img = self.to_torch(img)
-
-    if resize:
-      depth = depth.resize((320, 240)) # wxh,   TODO:modularise the shape  
-
 
     depth = self.to_torch(depth).float() * maxDepth  
 
@@ -137,18 +133,21 @@ class NYUDepthDatasetLabelled(torch.utils.data.Dataset):
 
 
 class NYUDepthDatasetRaw(torch.utils.data.Dataset):
-  def __init__(self, zip_file, dataset, transforms):
+  def __init__(self, zip_file, dataset, transforms, resized):
     self.zip_file = zip_file # the file is dynamically opened using BytesIO 
     self.dataset = dataset
     self.transforms = transforms
     self.maxDepth = 1000.0 
+    self.resized = resized
 
   def __getitem__(self, idx):
     sample = self.dataset[idx]
     img = Image.open(BytesIO(self.zip_file[sample[0]]))
 
     depth = Image.open(BytesIO(self.zip_file[sample[1]]))
-
+    if self.resized:
+      depth = depth.resize((320, 240)) # wxh
+       
     datum = {'img': img, 'depth': depth}
     if self.transforms:
       datum = self.transforms(datum) # a composed set of transforms should be passed
@@ -169,7 +168,7 @@ def get_test_transforms():
 
 
 class DataLoaders:
-  def __init__(self, path, train_val_ratio = 0.9):
+  def __init__(self, path, resized = True, train_val_ratio = 0.9):
     self.data = self.get_zip_file(path)
     self.nyu_train = []
     for row in self.data['data/nyu2_train.csv'].decode('UTF-8').split('\n'):
@@ -186,11 +185,12 @@ class DataLoaders:
     num_train = int(len(self.nyu_train) * train_val_ratio) 
     
     self.nyu_val = self.nyu_train[num_train:]
-    self.nyu_train = self.nyu_train[0: num_train]      
+    self.nyu_train = self.nyu_train[0: num_train]    
+    self.resized = resized  
 
   def get_train_dataloader(self, batch_size, shuffle = True):
 
-    train_dataset = NYUDepthDatasetRaw(self.data, self.nyu_train, get_train_transforms())
+    train_dataset = NYUDepthDatasetRaw(self.data, self.nyu_train, get_train_transforms(), self.resized)
     train_dataloader = torch.utils.data.DataLoader(train_dataset, 
                                                   batch_size = batch_size,
                                                   shuffle = shuffle,
@@ -199,7 +199,7 @@ class DataLoaders:
 
 
   def get_val_dataloader(self, batch_size, shuffle = False):
-    val_dataset = NYUDepthDatasetRaw(self.data, self.nyu_val, get_test_transforms())
+    val_dataset = NYUDepthDatasetRaw(self.data, self.nyu_val, get_test_transforms(), self.resized)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, 
                                                   batch_size = batch_size,
                                                   shuffle = shuffle,

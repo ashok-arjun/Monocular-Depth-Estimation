@@ -20,9 +20,9 @@ from evaluate import evaluate
 DATA_PATH = 'nyu_data.zip'
 
 class Trainer():
-  def __init__(self, data_path = DATA_PATH):
+  def __init__(self, data_path = DATA_PATH, resized = True):
     print('Loading data...')
-    self.dataloaders = DataLoaders(data_path)  
+    self.dataloaders = DataLoaders(path = data_path, resized = resized)  
     print('Data loaded!')
 
   def train_and_evaluate(self, config, checkpoint_file, local):
@@ -37,8 +37,9 @@ class Trainer():
 
     model = DenseDepth()
     model = model.to(device)
-    
-    optimizer = torch.optim.Adam(model.parameters(), config['lr'])
+    params = [param for param in model.parameters() if param.requires_grad == True]
+    print('A total of %d parameters' % (len(params)))
+    optimizer = torch.optim.Adam(params, config['lr'])
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = config['lr_scheduler_step_size'], gamma = 0.1)
 
     for i in range(config['start_epoch']):
