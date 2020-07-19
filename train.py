@@ -48,7 +48,7 @@ class Trainer():
     is_best = False
     best_test_rmse = 9e20
     
-    if wandb.run.resumed:
+    if wandb.run.resumed or local:
       if local:
         print('Loading checkpoint from local storage:',checkpoint_file)
         load_checkpoint(checkpoint_file, model, optimizer)
