@@ -37,16 +37,16 @@ class Trainer():
     num_batches = len(train_dataloader)
 
     model = DenseDepth()
+    if self.resized == False:
+      model = DenseDepthWithUpconvolution(model)
     model = model.to(device)
     params = [param for param in model.parameters() if param.requires_grad == True]
-    print('A total of %d parameters in Densedepth' % (len(params)))
+    print('A total of %d parameters in present model' % (len(params)))
     optimizer = torch.optim.Adam(params, config['lr'])
-     
     
-
     best_rmse = 9e20
     is_best = False
-    best_test_rmse = 9e20
+    best_test_rmse = 9e20 
     
     if wandb.run.resumed or local:
       if local:
@@ -60,14 +60,7 @@ class Trainer():
         best_rmse = wandb.run.summary["best_train_rmse"]
         best_test_rmse = wandb.run.summary["best_test_rmse"]
 
-    if self.resized == False:
-      model = DenseDepthWithUpconvolution(model)
-      model = model.to(device)
-      params = [param for param in model.parameters() if param.requires_grad == True]
-      print('A total of %d parameters in Densedepth with upconvolution, using this model' % (len(params)))
-      optimizer = torch.optim.Adam(params, config['lr'])
-      best_rmse = 9e20
-      best_test_rmse = 9e20
+    
 
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = config['lr_scheduler_step_size'], gamma = 0.1)
     for i in range(config['start_epoch']):
