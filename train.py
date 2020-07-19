@@ -11,7 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 import wandb
 
 
-from model.net import DenseDepth, evaluate_predictions, combined_loss 
+from model.net import DenseDepth, DenseDepthWithUpconvolution, evaluate_predictions, combined_loss 
 from model.dataloader import DataLoaders
 from utils import *
 from evaluate import evaluate
@@ -23,6 +23,7 @@ class Trainer():
   def __init__(self, data_path = DATA_PATH, resized = True):
     print('Loading data...')
     self.dataloaders = DataLoaders(path = data_path, resized = resized)  
+    self.resized = resized
     print('Data loaded!')
 
   def train_and_evaluate(self, config, checkpoint_file, local):
@@ -38,14 +39,10 @@ class Trainer():
     model = DenseDepth()
     model = model.to(device)
     params = [param for param in model.parameters() if param.requires_grad == True]
-    print('A total of %d parameters' % (len(params)))
+    print('A total of %d parameters in Densedepth' % (len(params)))
     optimizer = torch.optim.Adam(params, config['lr'])
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = config['lr_scheduler_step_size'], gamma = 0.1)
-
-    for i in range(config['start_epoch']):
-      lr_scheduler.step() # step the scheduler for the already done epochs 
+     
     
-    wandb.watch(model)
 
     best_rmse = 9e20
     is_best = False
@@ -63,11 +60,22 @@ class Trainer():
         best_rmse = wandb.run.summary["best_train_rmse"]
         best_test_rmse = wandb.run.summary["best_test_rmse"]
 
-    print('Training...')    
-    model.train()
+    if self.resized == False:
+      model = DenseDepthWithUpconvolution(model)
+      model = model.to(device)
+      params = [param for param in model.parameters() if param.requires_grad == True]
+      print('A total of %d parameters in Densedepth with upconvolution, using this model' % (len(params)))
+      optimizer = torch.optim.Adam(params, config['lr'])
+      best_rmse = 9e20
+      best_test_rmse = 9e20
 
-    
-    
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = config['lr_scheduler_step_size'], gamma = 0.1)
+    for i in range(config['start_epoch']):
+      lr_scheduler.step() # step the scheduler for the already done epochs
+    print('Training...')    
+    model.train()  
+    wandb.watch(model)
+  
     wandb_step = config['start_epoch'] * num_batches -1 # set it to the number of iterations done
 
     for epoch in range(config['start_epoch'], config['epochs']):
