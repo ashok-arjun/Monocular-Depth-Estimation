@@ -32,7 +32,7 @@ def get_test_data(path):
     img = Image.fromarray(rgb[i].astype(np.uint8), mode = 'RGB')
     img_depth = Image.fromarray(depth[i].astype(np.uint8)[:,:], mode='L')
     sample = {'img':img, 'depth':img_depth}
-    samples.append(toTensorFunc(sample = sample, resize = False))
+    samples.append(toTensorFunc(sample = sample))
     
   return samples, torch.from_numpy(crop)    
 

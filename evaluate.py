@@ -1,8 +1,9 @@
 import numpy as np
 import torch 
-
+import time
 from model.net import evaluate_predictions, combined_loss
 from utils import RunningAverage
+import datetime
 
 from torch.nn import Upsample
 
@@ -124,16 +125,14 @@ def evaluate_list(model, samples, crop, batch_size):
       images = torch.autograd.Variable(images.to(device))
       depths = torch.autograd.Variable(depths.to(device))
 
-      # TODO: try learning the upsampling(upconv)
-      # TODO: try averaging mirror prediction's mirror and current prediction
       
-      # without mirroring
-      predictions_unflipped = upsample_2x(model(images))
+      # predictions_unflipped = upsample_2x(model(images)) # Model 1
+      predictions_unflipped = model(images) # Model 2
       predictions_unflipped = predictions_unflipped[:, :, crop[0]:crop[1]+1, crop[2]:crop[3]+1]
 
-      #mirroring
-      predictions_flipped = upsample_2x(model(torch.from_numpy(images.numpy()[:,:,:,::-1].copy())))
-      predictions_from_flipped = torch.from_numpy(predictions_flipped.numpy()[:,:,:,::-1].copy())
+      # predictions_flipped = upsample_2x(model(torch.from_numpy(images.numpy()[:,:,:,::-1].copy()))) # Model 1
+      predictions_flipped = model(torch.from_numpy(images.cpu().numpy()[:,:,:,::-1].copy()).to(device)) # Model 2
+      predictions_from_flipped = torch.from_numpy(predictions_flipped.cpu().numpy()[:,:,:,::-1].copy()).to(device)
       predictions_from_flipped = predictions_from_flipped[:, :, crop[0]:crop[1]+1, crop[2]:crop[3]+1]
 
       # averaging them
@@ -144,12 +143,13 @@ def evaluate_list(model, samples, crop, batch_size):
       all_depths.append(depths)
     # END FOR
 
-    all_predictions = torch.stack(all_predictions)
-    all_depths = torch.stack(all_depths)
+    all_predictions = torch.stack(all_predictions); a_p_shape = all_predictions.shape
+    all_predictions = all_predictions.view(a_p_shape[0] * a_p_shape[1], a_p_shape[2], a_p_shape[3], a_p_shape[4])
+    all_depths = torch.stack(all_depths); a_d_shape = all_depths.shape
+    all_depths = all_depths.view(a_d_shape[0] * a_d_shape[1], a_d_shape[2], a_d_shape[3], a_d_shape[4])
 
-    loss = combined_loss(all_predictions, all_depths)
     metrics = evaluate_predictions(all_predictions, all_depths)
 
-    return loss, metrics
+    return metrics
 
 
