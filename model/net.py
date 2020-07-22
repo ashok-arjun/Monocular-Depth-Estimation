@@ -140,8 +140,8 @@ Combined loss
 
 def combined_loss(predictions, truth):
 #   loss = 0.1 * mean_l1_loss(predictions, truth) + gradient_loss(predictions, truth)  + (1 - ssim(predictions, truth))*0.5
-  loss = 0.1 * mean_l1_loss(predictions, truth) + (1 - ssim(predictions, truth))*0.5
-#   loss = 0.1 * mean_l1_loss(predictions, truth) + gradient_loss(predictions, truth)
+#   loss = 0.1 * mean_l1_loss(predictions, truth) + (1 - ssim(predictions, truth))*0.5
+  loss = 0.1 * mean_l1_loss(predictions, truth) + gradient_loss(predictions, truth)
 #   loss = gradient_loss(predictions, truth)  + (1 - ssim(predictions, truth))*0.5
   
   return loss
