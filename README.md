@@ -38,4 +38,4 @@ Inference:
 
 # Pre-trained models
 
-Model
+[Pretrained Model](https://1drv.ms/u/s!AlYxAnPCKqHhgxNdQLu_icSxf-rs?e=lF4CMH)
