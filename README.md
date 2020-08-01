@@ -25,10 +25,10 @@
 <summary>
 Data
 </summary>
-[NYU Depth v2 **train** (50K images) (4.1 GB)](https://tinyurl.com/nyu-data-zip)  
-[NYU Depth v2 **test** (654 images) (1 GB)](https://s3-eu-west-1.amazonaws.com/densedepth/nyu_test.zip)
+[NYU Depth v2 train](https://tinyurl.com/nyu-data-zip)  - (50K images) (4.1 GB)
+[NYU Depth v2 test](https://s3-eu-west-1.amazonaws.com/densedepth/nyu_test.zip) - (654 images) (1 GB)
   
-You don't need to extract the zip file, as the code loads the entire zip file into memory when training
+You don't have to extract the zip files, as the code loads the entire zip file into memory when training
 </details>
 
 <details>
