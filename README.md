@@ -9,11 +9,17 @@
 
 ## Qualitative
 
-(images comparison)
+| Input RGB Image | Ground truth depth map | Our results|
+|:---------------:|:----------------------:|:----------:|
+|![](docs/inputs/1.png)|![](docs/ground-truth/1.png)|![](docs/predictions/1.png)|
+|![](docs/inputs/2.png)|![](docs/ground-truth/2.png)|![](docs/predictions/2.png)|
 
 ## Quantitative
 
-(metrics table)
+|<img src="https://render.githubusercontent.com/render/math?math=\delta_1 \uparrow"> | <img src="https://render.githubusercontent.com/render/math?math=\delta_2 \uparrow"> |<img src="https://render.githubusercontent.com/render/math?math=\delta_3 \uparrow">|<img src="https://render.githubusercontent.com/render/math?math=rel \downarrow">|<img src="https://render.githubusercontent.com/render/math?math=rms\downarrow">|<img src="https://render.githubusercontent.com/render/math?math=log_{10}\downarrow">
+| :--------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------:| :--------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------: 
+|0.842|0.969|0.992|0.125|0.499|0.053
+
 
 # Pre-trained models
 
