@@ -11,8 +11,8 @@
 
 | Input RGB Image | Ground truth depth map | Our results|
 |:---------------:|:----------------------:|:----------:|
-|![](docs/inputs/1.png)|![](docs/ground-truth/1.png)|![](docs/predictions/1.png)|
-|![](docs/inputs/2.png)|![](docs/ground-truth/2.png)|![](docs/predictions/2.png)|
+|![](docs/image.png)|![](docs/gt.png)|![](docs/pred.png)|
+|![](docs/image2.png)|![](docs/gt2.png)|![](docs/pred2.png)|
 
 ## Quantitative
 
