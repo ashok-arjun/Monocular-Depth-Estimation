@@ -1,7 +1,7 @@
 # Fully Convolutional Dense Networks for High-Quality Monocular Depth Estimation
 
 
-This project addresses the problem of estimating the depth of a scene from the 2D image. A deep fully convolutional network in an encoder-decoder fashion has been used with skip connections from the encoder to the decoder.
+This project addresses the problem of estimating the depth of a scene from the 2D image. A deep fully convolutional network in an encoder-decoder fashion has been used with skip connections between the encoder and the decoder.
 
 
 # Results
