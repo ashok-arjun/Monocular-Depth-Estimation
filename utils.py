@@ -6,8 +6,6 @@ import shutil
 import torch
 import wandb
 
-
-
 def plot_color(ax, color, title="Color"):
 
     ax.axis('on')
@@ -147,7 +145,7 @@ def load_checkpoint(checkpoint, model, optimizer=None):
 
 def save_epoch(state, epoch_index):
     prefix = str(epoch_index)
-    print('Trying to save epoch', prefix)
-    torch.save(state, os.path.join(wandb.run.dir, 'epoch_' + prefix + ".pth.tar"))
-    print('Epoch saved to cloud: ', prefix)
-    wandb.save('epoch_' + prefix + ".pth.tar")
+    filename = 'epoch_' + prefix + '.pth.tar'
+    torch.save(state, os.path.join(wandb.run.dir, filename))
+    print('Epoch %s saved to cloud: ' % (prefix))
+    wandb.save(filename)

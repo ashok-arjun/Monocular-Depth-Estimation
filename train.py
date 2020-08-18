@@ -7,7 +7,7 @@ import numpy as np
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision.utils as vutils # contains useful functions like make_grid
+import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -16,7 +16,6 @@ from model.dataloader import DataLoaders
 from utils import *
 from evaluate import evaluate
 
-# shift these to config files or inside the class later
 DATA_PATH = 'nyu_data.zip'
 
 class Trainer():
@@ -26,7 +25,7 @@ class Trainer():
     self.resized = resized
     print('Data loaded!')
 
-  def train_and_evaluate(self, config, checkpoint_file, local):
+  def train_and_evaluate(self, config, checkpoint_file = '', local = False):
     """
     TODO: log other values/images
     """
@@ -75,8 +74,6 @@ class Trainer():
         images = torch.autograd.Variable(images.to(device))
         depths = torch.autograd.Variable(depths.to(device))
 
-        # depths = 1000.0/depths
-
         predictions = model(images)
 
         loss = combined_loss(predictions, depths)
@@ -91,8 +88,8 @@ class Trainer():
 
         if iteration % config['training_loss_log_interval'] == 0: 
           print(datetime.datetime.now(pytz.timezone('Asia/Kolkata')), end = ' ')
-          print('At epoch %d[%d/%d]' % (epoch, iteration, num_batches))
-          wandb.log({'Training loss': loss.item()}, step = wandb_step)
+          print('At epoch %d[%d/%d]; training loss: %f(%f)' % (epoch, iteration, num_batches, loss.item(), accumulated_loss()))
+          wandb.log({'Training loss': accumulated_loss()}, step = wandb_step)
 
         if iteration % config['other_metrics_log_interval'] == 0:
 

@@ -151,5 +151,3 @@ def evaluate_list(model, samples, crop, batch_size):
     metrics = evaluate_predictions(all_predictions, all_depths)
 
     return metrics
-
-
