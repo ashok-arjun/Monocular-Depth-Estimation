@@ -1,16 +1,3 @@
-'''
-
-NEW TRAINING PROCEDURE:
-
-1. Dataloader loads data: image,depth are between 0 and 1; normalize image
-2. Model processes image and gives tensor between 0 and 1
-3. Normalize depth and predicted depth by imagenet using normalise_batch
-4. Send them through VGG[no_grad], get list of outputs
-5. Construct loss from output
-6. Combine this loss with the 
-'''
-
-
 import time
 import datetime
 import pytz  
@@ -25,25 +12,20 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 from model.net import MonocularDepthModel, MonocularDepthModelWithUpconvolution  
-from model.loss import combined_loss
+from model.loss import Vgg16, combined_loss, mean_l2_loss
 from model.metrics import evaluate_predictions
 from model.dataloader import DataLoaders
 from utils import *
 from evaluate import evaluate
 
-DATA_PATH = 'nyu_data.zip'
-
 class Trainer():
-  def __init__(self, data_path = DATA_PATH, resized = True):
+  def __init__(self, data_path, resized = True):
     print('Loading data...')
     self.dataloaders = DataLoaders(path = data_path, resized = resized)  
     self.resized = resized
     print('Data loaded!')
 
   def train_and_evaluate(self, config, checkpoint_file = '', local = False):
-    """
-    TODO: log other values/images
-    """
     batch_size = config['batch_size']
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -58,6 +40,9 @@ class Trainer():
     print('A total of %d parameters in present model' % (len(params)))
     optimizer = torch.optim.Adam(params, config['lr'])
     
+
+    loss_model = Vgg16().to(device)
+
     best_rmse = 9e20
     is_best = False
     best_test_rmse = 9e20 
@@ -74,27 +59,38 @@ class Trainer():
     model.train()  
   
     wandb_step = config['start_epoch'] * num_batches -1 
+
+    accumulated_per_pixel_loss = RunningAverage()
+    accumulated_feature_loss = RunningAverage()
+    accumulated_iteration_time = RunningAverage()
     for epoch in range(config['start_epoch'], config['epochs']):
       wandb_step += 1
-      accumulated_loss = RunningAverage()
-      accumulated_iteration_time = RunningAverage()
       epoch_start_time = time.time()
-
       for iteration, batch in enumerate(train_dataloader):
 
         time_start = time.time()        
 
         optimizer.zero_grad()
         images, depths = batch['img'], batch['depth']
-        images = torch.autograd.Variable(images.to(device))
+        images = normalize_batch(torch.autograd.Variable(images.to(device)))
         depths = torch.autograd.Variable(depths.to(device))
 
         predictions = model(images)
 
-        loss = combined_loss(predictions, depths)
-        accumulated_loss.update(loss, images.shape[0])
+        predictions_normalized = normalize_batch(predictions)
+        depths_normalized = normalize_batch(depths)
 
-        loss.backward()
+        feature_losses_predictions = loss_model(predictions_normalized)
+        feature_losses_depths = loss_model(depths_normalized)
+
+        per_pixel_loss = combined_loss(predictions, depths)
+        accumulated_per_pixel_loss.update(per_pixel_loss, images.shape[0])
+
+        feature_loss = mean_l2_loss(feature_losses_predictions.relu2_2, feature_losses_depths.relu2_2)
+        accumulated_feature_loss.update(feature_loss, images.shape[0])
+
+        total_loss = per_pixel_loss + feature_loss
+        total_loss.backward()
         optimizer.step()
 
         time_end = time.time()
@@ -103,18 +99,19 @@ class Trainer():
 
         if iteration % config['training_loss_log_interval'] == 0: 
           print(datetime.datetime.now(pytz.timezone('Asia/Kolkata')), end = ' ')
-          print('At epoch %d[%d/%d]; training loss: %f(%f)' % (epoch, iteration, num_batches, loss.item(), accumulated_loss()))
-          wandb.log({'Training loss': accumulated_loss()}, step = wandb_step)
+          print('At epoch %d[%d/%d]; average per-pixel loss: %f; average feature loss' % (epoch, iteration, num_batches, accumulated_per_pixel_loss(), accumulated_feature_loss()))
+          wandb.log({'Average per-pixel loss': accumulated_per_pixel_loss()}, step = wandb_step)
+          wandb.log({'Average feature loss': accumulated_feature_loss()}, step = wandb_step)
 
         if iteration % config['other_metrics_log_interval'] == 0:
 
-          print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s ; loss: %f (%f)' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta, loss.item(), accumulated_loss()))
+          print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta))
           metrics = evaluate_predictions(predictions, depths)
           self.write_metrics(metrics, wandb_step = wandb_step, train = True)
           test_images, test_depths, test_preds, test_loss, test_metrics = evaluate(model, self.dataloaders.get_val_dataloader, batch_size = config['test_batch_size']) ; model.train() # evaluate(in model.eval()) and back to train
 
           self.compare_predictions(test_images, test_depths, test_preds, wandb_step)	
-          wandb.log({'Validation loss on random batch':test_loss.item()}, step = wandb_step)	
+          wandb.log({'Average Validation loss on random batch':test_loss.item()}, step = wandb_step)	
           self.write_metrics(test_metrics, wandb_step = wandb_step, train = False)
 
           if metrics['rmse'] < best_rmse: 
@@ -143,7 +140,6 @@ class Trainer():
                                
       epoch_end_time = time.time()
       print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
-      wandb.log({'Average Training loss across iters': accumulated_loss().item()}, step = wandb_step) 
       lr_scheduler.step() 
       torch.cuda.empty_cache()
 
@@ -157,7 +153,6 @@ class Trainer():
     else:	
       for key, value in metrics.items():	
         wandb.log({'Validation '+key: value}, step = wandb_step) 	
-
 
   def compare_predictions(self, images, depths, predictions, wandb_step):	
     image_plots = plot_batch_images(images)	

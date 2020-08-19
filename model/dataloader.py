@@ -134,7 +134,12 @@ class DataLoaders:
       if len(row) > 0:
         self.nyu_train.append(row.split(','))
 
-    self.nyu_train = self.nyu_train
+    random.shuffle(self.nyu_train)
+
+    val_start = int(len(self.nyu_train) * 0.95)
+
+    self.nyu_val = self.nyu_train[val_start:]
+    self.nyu_train = self.nyu_train[:val_start]
     self.resized = resized  
 
   def get_train_dataloader(self, batch_size, shuffle = True):
@@ -145,6 +150,15 @@ class DataLoaders:
                                                   shuffle = shuffle,
                                                   num_workers = 4) 
     return train_dataloader
+
+  def get_val_dataloader(self, batch_size, shuffle = True):
+
+    val_dataset = NYUDepthDatasetRaw(self.data, self.nyu_val, get_test_transforms(), self.resized)
+    val_dataloader = torch.utils.data.DataLoader(val_dataset, 
+                                                  batch_size = batch_size,
+                                                  shuffle = shuffle,
+                                                  num_workers = 4) 
+    return val_dataloader
 
   def get_zip_file(self, path):
     input_zip = ZipFile(path)
