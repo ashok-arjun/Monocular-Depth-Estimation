@@ -26,7 +26,7 @@ def plot_sample_tensor(img, depth):
   Accepts Torch tensors and plots them 
   """
   img = img.cpu().numpy().transpose(1,2,0) * 255
-  depth = ((depth.cpu().numpy().transpose(1,2,0) + 1) / 2) * 255
+  depth = ((depth.cpu().numpy().transpose(1,2,0))) * 255
 
   img = Image.fromarray(img.astype(np.uint8), mode = 'RGB')
   depth = Image.fromarray(depth.astype(np.uint8)[:,:,0], mode='L')
@@ -46,7 +46,7 @@ def plot_predicted_deviation(predicted_depth, true_depth):
   Accepts Torch tensors and plots them 
   """
   predicted_depth = (predicted_depth.cpu().numpy().transpose(1,2,0) / 1000) * 255
-  true_depth = ((true_depth.cpu().numpy().transpose(1,2,0) + 1) / 2) * 255
+  true_depth = ((true_depth.cpu().numpy().transpose(1,2,0))) * 255
 
   diff = predicted_depth - true_depth
 
@@ -87,7 +87,7 @@ def plot_batch_images(images):
 def plot_batch_depths(depths):
   plots = []
   for depth in depths:
-    depth = ((depth.cpu().numpy().transpose(1,2,0) + 1) / 2) * 255
+    depth = ((depth.cpu().numpy().transpose(1,2,0))) * 255
     depth = Image.fromarray(depth.astype(np.uint8)[:,:,0], mode='L')
     plots.append(depth)  
 
@@ -146,3 +146,9 @@ def save_epoch(state, epoch_index):
     torch.save(state, os.path.join(wandb.run.dir, filename))
     print('Epoch %s saved to cloud: ' % (prefix))
     wandb.save(filename)
+
+def normalize_batch(batch):
+    # normalize a tensor in [0,1] using imagenet mean and std
+    mean = batch.new_tensor([0.485, 0.456, 0.406]).view(-1, 1, 1)
+    std = batch.new_tensor([0.229, 0.224, 0.225]).view(-1, 1, 1)
+    return (batch - mean) / std

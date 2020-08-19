@@ -1,3 +1,16 @@
+'''
+
+NEW TRAINING PROCEDURE:
+
+1. Dataloader loads data: image,depth are between 0 and 1 and image is normalized
+2. Model processes image and gives tensor between 0 and 1
+3. Normalize depth and predicted depth by imagenet using normalise_batch
+4. Send them through VGG[no_grad], get list of outputs
+5. Construct loss from output
+6. Combine this loss with the 
+'''
+
+
 import time
 import datetime
 import pytz  
@@ -11,7 +24,9 @@ import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 
 
-from model.net import MonocularDepthModel, MonocularDepthModelWithUpconvolution, evaluate_predictions, combined_loss 
+from model.net import MonocularDepthModel, MonocularDepthModelWithUpconvolution  
+from model.loss import combined_loss
+from model.metrics import evaluate_predictions
 from model.dataloader import DataLoaders
 from utils import *
 from evaluate import evaluate

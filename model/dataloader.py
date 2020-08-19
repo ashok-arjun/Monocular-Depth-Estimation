@@ -74,7 +74,7 @@ class ToTensor(object):
     img, depth = sample['img'], sample['depth']
     img = normalize(self.to_torch(img))
 
-    depth = self.to_torch(depth).float() * 2 - 1  
+    depth = self.to_torch(depth).float() 
 
     return {'img': img, 'depth': depth}
 
