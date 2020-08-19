@@ -158,10 +158,8 @@ class NYUDepthDatasetRaw(torch.utils.data.Dataset):
 def get_train_transforms():
   return T.Compose([RandomHorizontalFlip(), RandomChannelSwap(), ToTensor()])
 
-
 def get_test_transforms():
   return T.Compose([ToTensor()])
-
 
 
 class DataLoaders:
@@ -172,17 +170,7 @@ class DataLoaders:
       if len(row) > 0:
         self.nyu_train.append(row.split(','))
 
-    self.nyu_test = []
-    for row in self.data['data/nyu2_test.csv'].decode('UTF-8').split('\n'):
-      if len(row) > 0:
-        self.nyu_test.append(row.split(','))
-
-    random.shuffle(self.nyu_train)
-
-    num_train = int(len(self.nyu_train) * train_val_ratio) 
-    
-    self.nyu_val = self.nyu_train[num_train:]
-    self.nyu_train = self.nyu_train[0: num_train]    
+    self.nyu_train = self.nyu_train
     self.resized = resized  
 
   def get_train_dataloader(self, batch_size, shuffle = True):
@@ -193,16 +181,6 @@ class DataLoaders:
                                                   shuffle = shuffle,
                                                   num_workers = 4) 
     return train_dataloader
-
-
-  def get_val_dataloader(self, batch_size, shuffle = False):
-    val_dataset = NYUDepthDatasetRaw(self.data, self.nyu_val, get_test_transforms(), self.resized)
-    val_dataloader = torch.utils.data.DataLoader(val_dataset, 
-                                                  batch_size = batch_size,
-                                                  shuffle = shuffle,
-                                                  num_workers = 1)
-    return val_dataloader                                              
-
 
   def get_zip_file(self, path):
     input_zip = ZipFile(path)
