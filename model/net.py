@@ -12,21 +12,13 @@ from math import exp
 """
 MODEL
 """
-
-# inherit nn.Module with __init__(self, params) and forward(self, img)
-# params can contain dropout rate, batch_norm or group_norm, number of channels in each layer, etc..
-# try out Densenet 121(7 million parameters) & then other models(if needed)
-# return number of channels in each bridge layer for the decoder's 4 upsampling blocks
-# bridge layer should inherit from nn.Sequential, it should perform upsampling to 2nd input's size, concat their dimensions and apply
-# conv-relu-conv-relu
-
 class Bridge(nn.Sequential):
   def __init__(self, in_channels, out_channels):
     super(Bridge, self).__init__()
     self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size = 3, padding = 1)
-    self.act1 = nn.LeakyReLU(0.2) # tune 
+    self.act1 = nn.LeakyReLU(0.2)  
     self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size = 3, padding = 1)
-    self.act2 = nn.LeakyReLU(0.2) # tune 
+    self.act2 = nn.LeakyReLU(0.2)  
 
   def forward(self, encoder_feature_map, decoder_feature_map):
     upsampled_decoder_map = self.bilinear_upsampling(decoder_feature_map, encoder_feature_map.shape)
@@ -92,25 +84,25 @@ class Decoder(nn.Module):
 
 
 
-class DenseDepth(nn.Module):
+class MonocularDepthModel(nn.Module):
   def __init__(self):
-    super(DenseDepth, self).__init__()
+    super(MonocularDepthModel, self).__init__()
     self.encoder = Encoder()
     self.decoder = Decoder()  
 
   def forward(self, images):
-    return self.decoder(self.encoder(images))  
+    return F.tanh(self.decoder(self.encoder(images)))
 
-class DenseDepthWithUpconvolution(nn.Module):
-  def __init__(self, pretrained_densedepth):
-    super(DenseDepthWithUpconvolution, self).__init__()
-    self.densedepth_pretrained = pretrained_densedepth
-    for param in self.densedepth_pretrained.parameters():
+class MonocularDepthModelWithUpconvolution(nn.Module):
+  def __init__(self, pretrained_depth_model):
+    super(MonocularDepthModelWithUpconvolution, self).__init__()
+    self.pretrained_depth_model = pretrained_depth_model
+    for param in self.pretrained_depth_model.parameters():
       param.requires_grad = False
     self.upconv2x = nn.ConvTranspose2d(in_channels = 1, out_channels = 1, kernel_size = 5, stride = 2, padding = 2, output_padding = 1)  
 
   def forward(self, images):
-    return self.upconv2x(self.densedepth_pretrained(images))
+    return F.tanh(self.upconv2x(self.pretrained_depth_model(images)))
     
 """
 METRICS
@@ -139,9 +131,9 @@ Combined loss
 """
 
 def combined_loss(predictions, truth):
-#   loss = 0.1 * mean_l1_loss(predictions, truth) + gradient_loss(predictions, truth)  + (1 - ssim(predictions, truth))*0.5
+  loss = 0.1 * mean_l1_loss(predictions, truth) + gradient_loss(predictions, truth)  + (1 - ssim(predictions, truth))*0.5
 #   loss = 0.1 * mean_l1_loss(predictions, truth) + (1 - ssim(predictions, truth))*0.5
-  loss = 0.1 * mean_l1_loss(predictions, truth) + gradient_loss(predictions, truth)
+  # loss = 0.1 * mean_l1_loss(predictions, truth) + gradient_loss(predictions, truth)
 #   loss = gradient_loss(predictions, truth)  + (1 - ssim(predictions, truth))*0.5
   
   return loss
@@ -253,8 +245,8 @@ def ssim(img1, img2, val_range = 1000.0, window_size=11, window=None, size_avera
     sigma2_sq = F.conv2d(img2 * img2, window, padding=padd, groups=channel) - mu2_sq
     sigma12 = F.conv2d(img1 * img2, window, padding=padd, groups=channel) - mu1_mu2
 
-    C1 = (0.01 * L) ** 2
-    C2 = (0.03 * L) ** 2
+    C1 = (0.01 * 2 - 1) ** 2
+    C2 = (0.03 * 2 - 1) ** 2
 
     v1 = 2.0 * sigma12 + C2
     v2 = sigma1_sq + sigma2_sq + C2

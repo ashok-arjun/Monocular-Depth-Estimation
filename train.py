@@ -11,7 +11,7 @@ import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 
 
-from model.net import DenseDepth, DenseDepthWithUpconvolution, evaluate_predictions, combined_loss 
+from model.net import MonocularDepthModel, MonocularDepthModelWithUpconvolution, evaluate_predictions, combined_loss 
 from model.dataloader import DataLoaders
 from utils import *
 from evaluate import evaluate
@@ -35,9 +35,9 @@ class Trainer():
     train_dataloader = self.dataloaders.get_train_dataloader(batch_size = batch_size) 
     num_batches = len(train_dataloader)
 
-    model = DenseDepth()
+    model = MonocularDepthModel()
     if self.resized == False:
-      model = DenseDepthWithUpconvolution(model)
+      model = MonocularDepthModelWithUpconvolution(model)
     model = model.to(device)
     params = [param for param in model.parameters() if param.requires_grad == True]
     print('A total of %d parameters in present model' % (len(params)))

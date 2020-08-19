@@ -13,7 +13,7 @@ from itertools import permutations
 
 def get_test_data(path):
   """
-  Returns all the torch tensors loading the image([0,1]), depth([0,1000]), eigen_crop(4 co-ordinates) of test data 
+  Returns all the torch tensors loading the image([0,1]), depth([-1,1]), eigen_crop(4 co-ordinates) of test data 
   """
   input_zip = ZipFile(path)
   data = {name: input_zip.read(name) for name in input_zip.namelist()}
@@ -22,9 +22,6 @@ def get_test_data(path):
   depth = np.load(BytesIO(data['eigen_test_depth.npy']))
   crop = np.load(BytesIO(data['eigen_test_crop.npy'])) 
   depth = np.clip(depth, 1.0, 10.0) / 10 * 255 
-
-  # now, everything is in the range of 0 - 255/0-255
-  # convert to tensors of range 0-1/0-1000 
 
   toTensorFunc = ToTensor()
   samples = []
@@ -71,11 +68,12 @@ class RandomChannelSwap(object):
 
 
 class ToTensor(object):
-  def __call__(self, sample, maxDepth = 1000.0):
+  '''Receives input as numpy arrays/PIL images in range 0,255 and converts them to 0,1 and depth to -1,1'''
+  def __call__(self, sample):
     img, depth = sample['img'], sample['depth']
     img = self.to_torch(img)
 
-    depth = self.to_torch(depth).float() * maxDepth  
+    depth = self.to_torch(depth).float() * 2 - 1  
 
     return {'img': img, 'depth': depth}
 
@@ -137,7 +135,6 @@ class NYUDepthDatasetRaw(torch.utils.data.Dataset):
     self.zip_file = zip_file # the file is dynamically opened using BytesIO 
     self.dataset = dataset
     self.transforms = transforms
-    self.maxDepth = 1000.0 
     self.resized = resized
 
   def __getitem__(self, idx):
@@ -210,4 +207,4 @@ class DataLoaders:
   def get_zip_file(self, path):
     input_zip = ZipFile(path)
     data = {name: input_zip.read(name) for name in input_zip.namelist()}
-    return data   
+    return data
