@@ -68,7 +68,7 @@ class RandomChannelSwap(object):
 
 
 class ToTensor(object):
-  '''Receives input as numpy arrays/PIL images in range 0,255 and converts them to 0,1 and depth to -1,1'''
+  '''Receives input as numpy arrays/PIL images and depths in range 0,255 and converts them to 0,1'''
   def __call__(self, sample):
     img, depth = sample['img'], sample['depth']
     img = self.to_torch(img)
@@ -93,42 +93,6 @@ class ToTensor(object):
     x_torch = x_torch.float().div(255)
 
     return x_torch
-
-
-class NYUDepthDatasetLabelled(torch.utils.data.Dataset):
-  def __init__(self, path, split, split_ratio, transforms):
-    self.mat = h5py.File(path, 'r')
-    num_train = int(self.mat['images'].shape[0] * split_ratio)
-    if split == 'train':
-      self.start_offset = 0
-      self.length = num_train 
-    else:
-      self.start_offset = num_train
-      self.length = self.mat['images'].shape[0] - num_train 
-    self.transforms = transforms
-
-  def __getitem__(self, idx):
-    img_mat = self.mat['images'][self.start_offset + idx]
-    img = np.empty([480, 640, 3])
-    img[:,:,0] = img_mat[0,:,:].T
-    img[:,:,1] = img_mat[1,:,:].T
-    img[:,:,2] = img_mat[2,:,:].T
-    img = img.astype('uint8')
-    img = Image.fromarray(img, 'RGB')
-
-    depth_mat = self.mat['depths'][self.start_offset + idx]
-    depth = np.empty([480, 640])
-    depth = depth_mat.T
-    depth = Image.fromarray(depth, 'F')
-
-    if self.transforms:
-      img, depth = self.transforms(img, depth)
-
-    return img, depth  
-
-  def __len__(self):   
-    return self.length
-
 
 class NYUDepthDatasetRaw(torch.utils.data.Dataset):
   def __init__(self, zip_file, dataset, transforms, resized):
