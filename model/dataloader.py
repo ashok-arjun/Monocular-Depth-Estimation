@@ -70,9 +70,8 @@ class RandomChannelSwap(object):
 class ToTensor(object):
   '''Receives input as numpy arrays/PIL images in range 0,255 and converts them to 0,1 and depth to -1,1'''
   def __call__(self, sample):
-    normalize = T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     img, depth = sample['img'], sample['depth']
-    img = normalize(self.to_torch(img))
+    img = self.to_torch(img)
 
     depth = self.to_torch(depth).float() 
 

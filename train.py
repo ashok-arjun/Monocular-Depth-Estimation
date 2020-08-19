@@ -2,7 +2,7 @@
 
 NEW TRAINING PROCEDURE:
 
-1. Dataloader loads data: image,depth are between 0 and 1 and image is normalized
+1. Dataloader loads data: image,depth are between 0 and 1; normalize image
 2. Model processes image and gives tensor between 0 and 1
 3. Normalize depth and predicted depth by imagenet using normalise_batch
 4. Send them through VGG[no_grad], get list of outputs
