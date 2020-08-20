@@ -16,7 +16,7 @@ from model.loss import Vgg16, combined_loss, mean_l2_loss
 from model.metrics import evaluate_predictions
 from model.dataloader import DataLoaders
 from utils import *
-from evaluate import evaluate
+from evaluate import infer_depth, evaluate_list
 
 class Trainer():
   def __init__(self, data_path, resized, test_data):
@@ -112,10 +112,17 @@ class Trainer():
       save_epoch({'state_dict': model.state_dict(), 	
                   'optim_dict': optimizer.state_dict()}, epoch_index = epoch)
 
-      # NOW EVALUATE ON THE TEST DATA AND WRITE THE METRICS AND CALL COMPARE_PREDICTIONS WITH SAMPLE IMAGES/DEPTHS/PREDICTIONS
+      # EVALUATE ON TEST DATA:
 
       test_metrics = evaluate_list(model, self.test_data[0], self.test_data[1], config['test_batch_size'], model_upsample = True)
       write_metrics(test_metrics, wandb_step, train=False)
+
+      random_indices = np.random.choice(self.test_data[0].shape[0], config['log_images_count'])
+      log_images = self.test_data[0][random_indices]
+      log_depths = self.test_data[1][random_indices]
+      log_preds, _ = torch.cat([infer_depth(img, model).unsqueeze(0) for img in log_images])
+      compare_predictions(log_images, log_depths, log_preds, wandb_step)
+
 
   def write_metrics(self, metrics, wandb_step, train = True):	
     if train:	

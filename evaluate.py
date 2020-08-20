@@ -33,29 +33,19 @@ class AverageMetrics:
     'rmse':self.rmse(), 
     'log10_error':self.log10_error()}    
 
-def evaluate(model, dataloader_getter, batch_size):
-  """
-  Evaluates on a SINGLE iteration of the dataloader, with batch_size images
-  :returns the loss value and metrics dict
-  """
+def infer_depth(image_tensor, model):
+  '''Image_tensor should be of shape C * H * W (and between 0 and 1) and H,W should be divisible by 32 perfectly.
+  If true depth is provided, it should also be a tensor(resized to the model prediction size)'''
   device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
   model = model.to(device)
-  
   model.eval()
 
-  test_dl = dataloader_getter(batch_size = batch_size, shuffle = True) 
-
-  sample = next(iter(test_dl))
-  images, depths = sample['img'], sample['depth']
-  images_ = normalize_batch(torch.autograd.Variable(images.to(device)))
-  depths = torch.autograd.Variable(depths.to(device))
-  
+  image = normalize_batch(torch.autograd.Variable(image_tensor.unsqueeze(0).to(device)))
+ 
   with torch.no_grad():
-    predictions = model(images_)
-    loss = combined_loss(predictions, depths)
-    metrics = evaluate_predictions(predictions, depths)
+    depth = model(image)
 
-  return images, depths, predictions, loss, metrics
+  return depth.squeeze(0)
 
 def evaluate_list(model, samples, crop, batch_size, model_upsample=True):
   """
