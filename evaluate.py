@@ -49,7 +49,7 @@ def evaluate_full(model, dataloader_getter, config):
   
   model.eval()
 
-  test_dl = dataloader_getter(batch_size = batch_size, shuffle = True) 
+  test_dl = dataloader_getter(batch_size = batch_size, shuffle = False) 
   num_iterations = len(test_dl)
   print('Batch size: %d, Number of batches: %d' % (batch_size, num_iterations) )
 
@@ -95,11 +95,11 @@ def evaluate(model, dataloader_getter, batch_size):
 
   sample = next(iter(test_dl))
   images, depths = sample['img'], sample['depth']
-  images = normalize_batch(torch.autograd.Variable(images.to(device)))
+  images_ = normalize_batch(torch.autograd.Variable(images.to(device)))
   depths = torch.autograd.Variable(depths.to(device))
   
   with torch.no_grad():
-    predictions = model(images)
+    predictions = model(images_)
     loss = combined_loss(predictions, depths)
     metrics = evaluate_predictions(predictions, depths)
 

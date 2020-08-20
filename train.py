@@ -96,7 +96,7 @@ class Trainer():
 
         if iteration % config['training_loss_log_interval'] == 0: 
           print(datetime.datetime.now(pytz.timezone('Asia/Kolkata')), end = ' ')
-          print('At epoch %d[%d/%d]; average per-pixel loss: %f; average feature loss' % (epoch, iteration, num_batches, accumulated_per_pixel_loss(), accumulated_feature_loss()))
+          print('At epoch %d[%d/%d]; average per-pixel loss: %f; average feature loss: %f' % (epoch, iteration, num_batches, accumulated_per_pixel_loss(), accumulated_feature_loss()))
           wandb.log({'Average per-pixel loss': accumulated_per_pixel_loss()}, step = wandb_step)
           wandb.log({'Average feature loss': accumulated_feature_loss()}, step = wandb_step)
 
@@ -118,7 +118,6 @@ class Trainer():
           save_checkpoint({'iteration': wandb_step, 
                           'state_dict': model.state_dict(), 
                           'optim_dict': optimizer.state_dict()},
-                          is_best = is_best,
                           checkpoint_dir = 'experiments/', train = True)
 
           if test_metrics['rmse'] < best_test_rmse:

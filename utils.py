@@ -107,7 +107,7 @@ class RunningAverage():
     return self.sum/self.count  
 
 
-def save_checkpoint(state, is_best, checkpoint_dir, train = True):
+def save_checkpoint(state, checkpoint_dir, train = True):
     """Saves model and training parameters at checkpoint + 'last.pth.tar'. If is_best==True, also saves
     checkpoint + 'best.pth.tar'
     Args:
@@ -118,9 +118,6 @@ def save_checkpoint(state, is_best, checkpoint_dir, train = True):
     prefix = 'train' if train else 'test'
     torch.save(state, os.path.join(checkpoint_dir, prefix + '_last.pth.tar'))
     torch.save(state, os.path.join(wandb.run.dir, prefix + "_last.pth.tar"))
-    if is_best:
-        torch.save(state, os.path.join(checkpoint_dir, prefix + '_best.pth.tar'))
-        torch.save(state, os.path.join(wandb.run.dir, prefix + "_best.pth.tar"))
 
 def load_checkpoint(checkpoint, model, optimizer=None):
     """Loads model parameters (state_dict) from file_path. If optimizer is provided, loads state_dict of
@@ -144,7 +141,7 @@ def save_epoch(state, epoch_index):
     prefix = str(epoch_index)
     filename = 'epoch_' + prefix + '.pth.tar'
     torch.save(state, os.path.join(wandb.run.dir, filename))
-    print('Epoch %s saved to cloud: ' % (prefix))
+    print('Epoch %s saved to cloud' % (prefix))
     wandb.save(filename)
 
 def normalize_batch(batch):

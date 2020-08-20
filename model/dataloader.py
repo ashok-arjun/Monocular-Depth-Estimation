@@ -133,10 +133,12 @@ class DataLoaders:
     for row in csv.reader(open(os.path.join(data_dir, 'data/nyu2_train.csv')), delimiter=','):
       if len(row) > 0:
         self.nyu_train.append(row)
-    self.nyu_val = []
-    for row in csv.reader(open(os.path.join(data_dir, 'data/nyu2_test.csv')), delimiter=','):
-      if len(row) > 0:
-        self.nyu_val.append(row)
+
+    train_val_split = 0.85
+    val_start = int(len(self.nyu_train) * 0.85)    
+    self.nyu_val = self.nyu_train[val_start:]
+    self.nyu_train = self.nyu_train[:val_start]
+
     self.resized = resized  
     self.data_dir = data_dir
 
