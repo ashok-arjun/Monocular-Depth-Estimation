@@ -139,5 +139,5 @@ class DataLoaders:
     train_dataloader = torch.utils.data.DataLoader(train_dataset, 
                                                   batch_size = batch_size,
                                                   shuffle = shuffle,
-                                                  num_workers = 4) 
+                                                  num_workers = 0) 
     return train_dataloader

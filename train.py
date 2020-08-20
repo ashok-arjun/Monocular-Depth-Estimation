@@ -117,10 +117,10 @@ class Trainer():
       test_metrics = evaluate_list(model, self.test_data[0], self.test_data[1], config['test_batch_size'], model_upsample = True)
       write_metrics(test_metrics, wandb_step, train=False)
 
-      random_indices = np.random.choice(self.test_data[0].shape[0], config['log_images_count'])
-      log_images = self.test_data[0][random_indices]
-      log_depths = self.test_data[1][random_indices]
-      log_preds, _ = torch.cat([infer_depth(img, model).unsqueeze(0) for img in log_images])
+      random_indices = np.random.choice(len(self.test_data[0]), config['log_images_count'])
+      log_images = torch.cat([self.test_data[0][i]['img'].unsqueeze(0) for i in random_indices], dim = 0)
+      log_depths = torch.cat([self.test_data[0][i]['depth'].unsqueeze(0) for i in random_indices], dim = 0)
+      log_preds = torch.cat([infer_depth(img, model, upsample = True)[0].unsqueeze(0) for img in log_images], dim = 0)
       compare_predictions(log_images, log_depths, log_preds, wandb_step)
 
 
@@ -136,7 +136,7 @@ class Trainer():
     image_plots = plot_batch_images(images)	
     depth_plots = plot_batch_depths(depths)	
     pred_plots = plot_batch_depths(predictions)	
-    difference = plot_batch_depths(torch.abs(depths - predictions))	
+    difference = plot_batch_depths(torch.abs(depths.cpu() - predictions.cpu()))	
 
     wandb.log({"Sample Validation images": [wandb.Image(image_plot) for image_plot in image_plots]}, step = wandb_step)	
     wandb.log({"Sample Validation depths": [wandb.Image(image_plot) for image_plot in depth_plots]}, step = wandb_step)	

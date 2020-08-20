@@ -33,7 +33,7 @@ class AverageMetrics:
     'rmse':self.rmse(), 
     'log10_error':self.log10_error()}    
 
-def infer_depth(image_tensor, model):
+def infer_depth(image_tensor, model, upsample = True):
   '''Image_tensor should be of shape C * H * W (and between 0 and 1) and H,W should be divisible by 32 perfectly.
   If true depth is provided, it should also be a tensor(resized to the model prediction size)'''
   device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -44,8 +44,9 @@ def infer_depth(image_tensor, model):
  
   with torch.no_grad():
     depth = model(image)
-
-  return depth.squeeze(0)
+  if upsample:
+    depth = Upsample(scale_factor = 2, mode = 'bilinear', align_corners = True)(depth)
+  return depth
 
 def evaluate_list(model, samples, crop, batch_size, model_upsample=True):
   """
@@ -80,9 +81,9 @@ def evaluate_list(model, samples, crop, batch_size, model_upsample=True):
 
 
       if model_upsample:
-        predictions_flipped = upsample_2x(model(torch.from_numpy(images.numpy()[:,:,:,::-1].copy()))) 
+        predictions_flipped = upsample_2x(model(torch.from_numpy(images.cpu().numpy()[:,:,:,::-1].copy()).to(device))) 
       else:
-        predictions_flipped = model(torch.from_numpy(images.cpu().numpy()[:,:,:,::-1].copy()).to(device)) # Model 2
+        predictions_flipped = model(torch.from_numpy(images.cpu().numpy()[:,:,:,::-1].copy()).to(device)) 
 
       predictions_from_flipped = torch.from_numpy(predictions_flipped.cpu().numpy()[:,:,:,::-1].copy()).to(device)
       predictions_from_flipped = predictions_from_flipped[:, :, crop[0]:crop[1]+1, crop[2]:crop[3]+1]
