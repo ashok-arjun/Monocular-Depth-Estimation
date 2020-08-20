@@ -1,5 +1,5 @@
 import torch
-from loss import mean_l2_loss
+from model.loss import mean_l2_loss
 
 def evaluate_predictions(predictions, truth):
   """

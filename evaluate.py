@@ -1,11 +1,13 @@
 import numpy as np
 import torch 
 import time
-from model.net import evaluate_predictions, combined_loss
+from model.metrics import evaluate_predictions
+from model.loss import combined_loss
 from utils import RunningAverage
 import datetime
 
 from torch.nn import Upsample
+from utils import *
 
 class AverageMetrics:
   def __init__(self):
@@ -81,7 +83,7 @@ def evaluate_full(model, dataloader_getter, config):
 
 def evaluate(model, dataloader_getter, batch_size):
   """
-  Evaluates on a single iteration of the dataloader, with batch_size images
+  Evaluates on a SINGLE iteration of the dataloader, with batch_size images
   :returns the loss value and metrics dict
   """
   device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -93,7 +95,7 @@ def evaluate(model, dataloader_getter, batch_size):
 
   sample = next(iter(test_dl))
   images, depths = sample['img'], sample['depth']
-  images = torch.autograd.Variable(images.to(device))
+  images = normalize_batch(torch.autograd.Variable(images.to(device)))
   depths = torch.autograd.Variable(depths.to(device))
   
   with torch.no_grad():
@@ -105,7 +107,7 @@ def evaluate(model, dataloader_getter, batch_size):
 
 def evaluate_list(model, samples, crop, batch_size):
   """
-  Evaluates on the test data(with the eigen crop)
+  Evaluates on the test data(with the eigen crop). Function created for easy execution of test data(available as a list)
   """
   device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
   model = model.to(device)
@@ -125,6 +127,7 @@ def evaluate_list(model, samples, crop, batch_size):
       images = torch.autograd.Variable(images.to(device))
       depths = torch.autograd.Variable(depths.to(device))
 
+      images = normalize_batch(images)
       
       # predictions_unflipped = upsample_2x(model(images)) # Model 1
       predictions_unflipped = model(images) # Model 2

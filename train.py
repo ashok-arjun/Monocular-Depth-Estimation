@@ -20,10 +20,8 @@ from evaluate import evaluate
 
 class Trainer():
   def __init__(self, data_path, resized = True):
-    print('Loading data...')
-    self.dataloaders = DataLoaders(path = data_path, resized = resized)  
+    self.dataloaders = DataLoaders(data_path, resized = resized)  
     self.resized = resized
-    print('Data loaded!')
 
   def train_and_evaluate(self, config, checkpoint_file = '', local = False):
     batch_size = config['batch_size']
@@ -55,9 +53,8 @@ class Trainer():
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = config['lr_scheduler_step_size'], gamma = 0.1)
     for i in range(config['start_epoch']):
       lr_scheduler.step() # step the scheduler for the already done epochs
-    print('Training...')    
-    model.train()  
-  
+    print('Training...')  
+      
     wandb_step = config['start_epoch'] * num_batches -1 
 
     accumulated_per_pixel_loss = RunningAverage()
@@ -67,7 +64,7 @@ class Trainer():
       wandb_step += 1
       epoch_start_time = time.time()
       for iteration, batch in enumerate(train_dataloader):
-
+        model.train() 
         time_start = time.time()        
 
         optimizer.zero_grad()
@@ -108,8 +105,7 @@ class Trainer():
           print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta))
           metrics = evaluate_predictions(predictions, depths)
           self.write_metrics(metrics, wandb_step = wandb_step, train = True)
-          test_images, test_depths, test_preds, test_loss, test_metrics = evaluate(model, self.dataloaders.get_val_dataloader, batch_size = config['test_batch_size']) ; model.train() # evaluate(in model.eval()) and back to train
-
+          test_images, test_depths, test_preds, test_loss, test_metrics = evaluate(model, self.dataloaders.get_val_dataloader, batch_size = config['test_batch_size'])
           self.compare_predictions(test_images, test_depths, test_preds, wandb_step)	
           wandb.log({'Average Validation loss on random batch':test_loss.item()}, step = wandb_step)	
           self.write_metrics(test_metrics, wandb_step = wandb_step, train = False)
@@ -130,13 +126,7 @@ class Trainer():
             best_test_rmse = test_metrics['rmse']
 
           is_best = False
-          
-          del test_images
-          del test_depths
-          del test_preds
-          
-        del predictions
-        del depths   
+ 
                                
       epoch_end_time = time.time()
       print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
