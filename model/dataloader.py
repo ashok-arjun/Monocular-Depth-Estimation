@@ -9,11 +9,12 @@ from zipfile import ZipFile
 from io import BytesIO
 import random
 from itertools import permutations
+import csv
 
 
 def get_test_data(path):
   """
-  Returns all the torch tensors loading the image([0,1]), depth([-1,1]), eigen_crop(4 co-ordinates) of test data 
+  Returns all the torch tensors loading the image([0,1]), depth([-1,1]), eigen_crop(4 co-ordinates) of test data ZIP FILE
   """
   input_zip = ZipFile(path)
   data = {name: input_zip.read(name) for name in input_zip.namelist()}
@@ -95,17 +96,16 @@ class ToTensor(object):
     return x_torch
 
 class NYUDepthDatasetRaw(torch.utils.data.Dataset):
-  def __init__(self, zip_file, dataset, transforms, resized):
-    self.zip_file = zip_file 
+  def __init__(self, dataset, transforms, resized):
     self.dataset = dataset
     self.transforms = transforms
     self.resized = resized
 
   def __getitem__(self, idx):
     sample = self.dataset[idx]
-    img = Image.open(BytesIO(self.zip_file[sample[0]]))
+    img = Image.open(sample[0])
 
-    depth = Image.open(BytesIO(self.zip_file[sample[1]]))
+    depth = Image.open(sample[1])
     if self.resized:
       depth = depth.resize((320, 240)) # wxh
        
@@ -127,24 +127,20 @@ def get_test_transforms():
 
 
 class DataLoaders:
-  def __init__(self, path, resized = True, train_val_ratio = 0.9):
-    self.data = self.get_zip_file(path)
+  def __init__(self, data_dir, resized = True):    
     self.nyu_train = []
-    for row in self.data['data/nyu2_train.csv'].decode('UTF-8').split('\n'):
+    for row in csv.reader(open(os.path.join(data_dir, 'nyu_train.csv')), delimiter=','):
       if len(row) > 0:
         self.nyu_train.append(row.split(','))
-
-    random.shuffle(self.nyu_train)
-
-    val_start = int(len(self.nyu_train) * 0.95)
-
-    self.nyu_val = self.nyu_train[val_start:]
-    self.nyu_train = self.nyu_train[:val_start]
+    self.nyu_val = []
+    for row in csv.reader(open(os.path.join(data_dir, 'nyu_val.csv')), delimiter=','):
+      if len(row) > 0:
+        self.nyu_val.append(row.split(','))
     self.resized = resized  
 
   def get_train_dataloader(self, batch_size, shuffle = True):
 
-    train_dataset = NYUDepthDatasetRaw(self.data, self.nyu_train, get_train_transforms(), self.resized)
+    train_dataset = NYUDepthDatasetRaw(self.nyu_train, get_train_transforms(), self.resized)
     train_dataloader = torch.utils.data.DataLoader(train_dataset, 
                                                   batch_size = batch_size,
                                                   shuffle = shuffle,
@@ -153,14 +149,9 @@ class DataLoaders:
 
   def get_val_dataloader(self, batch_size, shuffle = True):
 
-    val_dataset = NYUDepthDatasetRaw(self.data, self.nyu_val, get_test_transforms(), self.resized)
+    val_dataset = NYUDepthDatasetRaw(self.nyu_val, get_test_transforms(), self.resized)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, 
                                                   batch_size = batch_size,
                                                   shuffle = shuffle,
                                                   num_workers = 4) 
     return val_dataloader
-
-  def get_zip_file(self, path):
-    input_zip = ZipFile(path)
-    data = {name: input_zip.read(name) for name in input_zip.namelist()}
-    return data
