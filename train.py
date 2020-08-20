@@ -19,9 +19,10 @@ from utils import *
 from evaluate import evaluate
 
 class Trainer():
-  def __init__(self, data_path, resized = True):
+  def __init__(self, data_path, resized, test_data):
     self.dataloaders = DataLoaders(data_path, resized = resized)  
     self.resized = resized
+    self.test_data = test_data # (samples, crop)
 
   def train_and_evaluate(self, config, checkpoint_file = '', local = False):
     batch_size = config['batch_size']
@@ -94,38 +95,14 @@ class Trainer():
         accumulated_iteration_time.update(time_end - time_start)
         eta = str(datetime.timedelta(seconds = int(accumulated_iteration_time() * (num_batches - iteration))))
 
-        if iteration % config['training_loss_log_interval'] == 0: 
-          print(datetime.datetime.now(pytz.timezone('Asia/Kolkata')), end = ' ')
-          print('At epoch %d[%d/%d]; average per-pixel loss: %f; average feature loss: %f' % (epoch, iteration, num_batches, accumulated_per_pixel_loss(), accumulated_feature_loss()))
+        if iteration % config['log_interval'] == 0: 
+          print(datetime.datetime.now(pytz.timezone('Asia/Kolkata')), end = ': ')
+          print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta))
+          print('Average per-pixel loss: %f; Average feature loss: %f' % (accumulated_per_pixel_loss(), accumulated_feature_loss()))
           wandb.log({'Average per-pixel loss': accumulated_per_pixel_loss()}, step = wandb_step)
           wandb.log({'Average feature loss': accumulated_feature_loss()}, step = wandb_step)
-
-        if iteration % config['other_metrics_log_interval'] == 0:
-
-          print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta))
           metrics = evaluate_predictions(predictions, depths)
           self.write_metrics(metrics, wandb_step = wandb_step, train = True)
-          test_images, test_depths, test_preds, test_loss, test_metrics = evaluate(model, self.dataloaders.get_val_dataloader, batch_size = config['test_batch_size'])
-          self.compare_predictions(test_images, test_depths, test_preds, wandb_step)	
-          wandb.log({'Average Validation loss on random batch':test_loss.item()}, step = wandb_step)	
-          self.write_metrics(test_metrics, wandb_step = wandb_step, train = False)
-
-          if metrics['rmse'] < best_rmse: 
-            wandb.run.summary["best_train_rmse"] = metrics['rmse']
-            best_rmse = metrics['rmse']
-            is_best = True
-
-          save_checkpoint({'iteration': wandb_step, 
-                          'state_dict': model.state_dict(), 
-                          'optim_dict': optimizer.state_dict()},
-                          checkpoint_dir = 'experiments/', train = True)
-
-          if test_metrics['rmse'] < best_test_rmse:
-            wandb.run.summary["best_test_rmse"] = test_metrics['rmse'] 
-            best_test_rmse = test_metrics['rmse']
-
-          is_best = False
- 
                                
       epoch_end_time = time.time()
       print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
@@ -135,13 +112,18 @@ class Trainer():
       save_epoch({'state_dict': model.state_dict(), 	
                   'optim_dict': optimizer.state_dict()}, epoch_index = epoch)
 
+      # NOW EVALUATE ON THE TEST DATA AND WRITE THE METRICS AND CALL COMPARE_PREDICTIONS WITH SAMPLE IMAGES/DEPTHS/PREDICTIONS
+
+      test_metrics = evaluate_list(model, self.test_data[0], self.test_data[1], config['test_batch_size'], model_upsample = True)
+      write_metrics(test_metrics, wandb_step, train=False)
+
   def write_metrics(self, metrics, wandb_step, train = True):	
     if train:	
       for key, value in metrics.items():	
         wandb.log({'Train '+key: value}, step = wandb_step)	
     else:	
       for key, value in metrics.items():	
-        wandb.log({'Validation '+key: value}, step = wandb_step) 	
+        wandb.log({'Test '+key: value}, step = wandb_step) 	
 
   def compare_predictions(self, images, depths, predictions, wandb_step):	
     image_plots = plot_batch_images(images)	

@@ -13,9 +13,6 @@ import csv
 
 
 def get_test_data(path):
-  """
-  Returns all the torch tensors loading the image([0,1]), depth([-1,1]), eigen_crop(4 co-ordinates) of test data ZIP FILE
-  """
   input_zip = ZipFile(path)
   data = {name: input_zip.read(name) for name in input_zip.namelist()}
 
@@ -31,7 +28,7 @@ def get_test_data(path):
     img_depth = Image.fromarray(depth[i].astype(np.uint8)[:,:], mode='L')
     sample = {'img':img, 'depth':img_depth}
     samples.append(toTensorFunc(sample = sample))
-    
+  del data # frees memory
   return samples, torch.from_numpy(crop)    
 
 
@@ -133,12 +130,6 @@ class DataLoaders:
     for row in csv.reader(open(os.path.join(data_dir, 'data/nyu2_train.csv')), delimiter=','):
       if len(row) > 0:
         self.nyu_train.append(row)
-
-    train_val_split = 0.85
-    val_start = int(len(self.nyu_train) * 0.85)    
-    self.nyu_val = self.nyu_train[val_start:]
-    self.nyu_train = self.nyu_train[:val_start]
-
     self.resized = resized  
     self.data_dir = data_dir
 
@@ -150,12 +141,3 @@ class DataLoaders:
                                                   shuffle = shuffle,
                                                   num_workers = 4) 
     return train_dataloader
-
-  def get_val_dataloader(self, batch_size, shuffle = True):
-
-    val_dataset = NYUDepthDatasetRaw(self.data_dir, self.nyu_val, get_test_transforms(), self.resized)
-    val_dataloader = torch.utils.data.DataLoader(val_dataset, 
-                                                  batch_size = batch_size,
-                                                  shuffle = shuffle,
-                                                  num_workers = 4) 
-    return val_dataloader
