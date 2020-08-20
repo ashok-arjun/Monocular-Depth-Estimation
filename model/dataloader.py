@@ -96,16 +96,17 @@ class ToTensor(object):
     return x_torch
 
 class NYUDepthDatasetRaw(torch.utils.data.Dataset):
-  def __init__(self, dataset, transforms, resized):
+  def __init__(self, data_dir, dataset, transforms, resized):
+    self.data_dir = data_dir
     self.dataset = dataset
     self.transforms = transforms
     self.resized = resized
 
   def __getitem__(self, idx):
     sample = self.dataset[idx]
-    img = Image.open(sample[0])
+    img = Image.open(os.path.join(self.data_dir, sample[0]))
 
-    depth = Image.open(sample[1])
+    depth = Image.open(os.path.join(self.data_dir, sample[1]))
     if self.resized:
       depth = depth.resize((320, 240)) # wxh
        
@@ -129,18 +130,19 @@ def get_test_transforms():
 class DataLoaders:
   def __init__(self, data_dir, resized = True):    
     self.nyu_train = []
-    for row in csv.reader(open(os.path.join(data_dir, 'nyu_train.csv')), delimiter=','):
+    for row in csv.reader(open(os.path.join(data_dir, 'data/nyu2_train.csv')), delimiter=','):
       if len(row) > 0:
-        self.nyu_train.append(row.split(','))
+        self.nyu_train.append(row)
     self.nyu_val = []
-    for row in csv.reader(open(os.path.join(data_dir, 'nyu_val.csv')), delimiter=','):
+    for row in csv.reader(open(os.path.join(data_dir, 'data/nyu2_test.csv')), delimiter=','):
       if len(row) > 0:
-        self.nyu_val.append(row.split(','))
+        self.nyu_val.append(row)
     self.resized = resized  
+    self.data_dir = data_dir
 
   def get_train_dataloader(self, batch_size, shuffle = True):
 
-    train_dataset = NYUDepthDatasetRaw(self.nyu_train, get_train_transforms(), self.resized)
+    train_dataset = NYUDepthDatasetRaw(self.data_dir, self.nyu_train, get_train_transforms(), self.resized)
     train_dataloader = torch.utils.data.DataLoader(train_dataset, 
                                                   batch_size = batch_size,
                                                   shuffle = shuffle,
@@ -149,7 +151,7 @@ class DataLoaders:
 
   def get_val_dataloader(self, batch_size, shuffle = True):
 
-    val_dataset = NYUDepthDatasetRaw(self.nyu_val, get_test_transforms(), self.resized)
+    val_dataset = NYUDepthDatasetRaw(self.data_dir, self.nyu_val, get_test_transforms(), self.resized)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, 
                                                   batch_size = batch_size,
                                                   shuffle = shuffle,
