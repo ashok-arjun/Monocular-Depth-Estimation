@@ -125,12 +125,21 @@ class Trainer():
 
 
   def write_metrics(self, metrics, wandb_step, train = True):	
+    # if train:	
+    #   for key, value in metrics.items():	
+    #     wandb.log({'Train '+key: value}, step = wandb_step)	
+    # else:	
+    #   for key, value in metrics.items():	
+    #     wandb.log({'Test '+key: value}, step = wandb_step) 	
+
+    writing_metrics = ['d1_accuracy', 'rmse']
+
     if train:	
-      for key, value in metrics.items():	
-        wandb.log({'Train '+key: value}, step = wandb_step)	
+      for key in writing_metrics:	
+        wandb.log({'Train '+key: metrics[key]}, step = wandb_step)	
     else:	
-      for key, value in metrics.items():	
-        wandb.log({'Test '+key: value}, step = wandb_step) 	
+      for key in writing_metrics:	
+        wandb.log({'Test '+key: metrics[key]}, step = wandb_step) 
 
   def compare_predictions(self, images, depths, predictions, wandb_step):	
     image_plots = plot_batch_images(images)	
