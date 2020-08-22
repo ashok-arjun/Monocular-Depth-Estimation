@@ -14,15 +14,15 @@ from torch.utils.tensorboard import SummaryWriter
 from model.net import MonocularDepthModel, MonocularDepthModelWithUpconvolution  
 from model.loss import Vgg16, combined_loss, mean_l2_loss
 from model.metrics import evaluate_predictions
-from model.dataloader import DataLoaders
+from model.dataloader import DataLoaders, get_test_data
 from utils import *
 from evaluate import infer_depth, evaluate_list
 
 class Trainer():
-  def __init__(self, data_path, resized, test_data):
+  def __init__(self, data_path, test_zip_path, resized):
     self.dataloaders = DataLoaders(data_path, resized = resized)  
     self.resized = resized
-    self.test_data = test_data # (samples, crop)
+    self.test_data = get_test_data(test_zip_path) # (samples, crop)
 
   def train_and_evaluate(self, config, checkpoint_file = '', local = False):
     batch_size = config['batch_size']
@@ -41,11 +41,7 @@ class Trainer():
     
 
     loss_model = Vgg16().to(device)
-
-    best_rmse = 9e20
-    is_best = False
-    best_test_rmse = 9e20 
-    
+  
     if local:
       print('Loading checkpoint from local storage:',checkpoint_file)
       load_checkpoint(checkpoint_file, model, optimizer)
@@ -62,9 +58,9 @@ class Trainer():
     accumulated_feature_loss = RunningAverage()
     accumulated_iteration_time = RunningAverage()
     for epoch in range(config['start_epoch'], config['epochs']):
-      wandb_step += 1
       epoch_start_time = time.time()
       for iteration, batch in enumerate(train_dataloader):
+        wandb_step += 1
         model.train() 
         time_start = time.time()        
 
@@ -112,16 +108,18 @@ class Trainer():
       save_epoch({'state_dict': model.state_dict(), 	
                   'optim_dict': optimizer.state_dict()}, epoch_index = epoch)
 
+      print('Epoch %d saved to cloud\n\n' % (epoch))
+
       # EVALUATE ON TEST DATA:
 
       test_metrics = evaluate_list(model, self.test_data[0], self.test_data[1], config['test_batch_size'], model_upsample = True)
-      write_metrics(test_metrics, wandb_step, train=False)
+      self.write_metrics(test_metrics, wandb_step, train=False)
 
       random_indices = np.random.choice(len(self.test_data[0]), config['log_images_count'])
       log_images = torch.cat([self.test_data[0][i]['img'].unsqueeze(0) for i in random_indices], dim = 0)
       log_depths = torch.cat([self.test_data[0][i]['depth'].unsqueeze(0) for i in random_indices], dim = 0)
       log_preds = torch.cat([infer_depth(img, model, upsample = True)[0].unsqueeze(0) for img in log_images], dim = 0)
-      compare_predictions(log_images, log_depths, log_preds, wandb_step)
+      self.compare_predictions(log_images, log_depths, log_preds, wandb_step)
 
 
   def write_metrics(self, metrics, wandb_step, train = True):	

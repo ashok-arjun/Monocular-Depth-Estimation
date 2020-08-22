@@ -140,8 +140,7 @@ def load_checkpoint(checkpoint, model, optimizer=None):
 def save_epoch(state, epoch_index):
     prefix = str(epoch_index)
     filename = 'epoch_' + prefix + '.pth.tar'
-    torch.save(state, os.path.join(wandb.run.dir, filename))
-    print('Epoch %s saved to cloud' % (prefix))
+    torch.save(state, os.path.join(wandb.run.dir, filename))    
     wandb.save(filename)
 
 def normalize_batch(batch):

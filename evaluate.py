@@ -95,10 +95,8 @@ def evaluate_list(model, samples, crop, batch_size, model_upsample=True):
       all_depths.append(depths)
     # END FOR
 
-    all_predictions = torch.stack(all_predictions); a_p_shape = all_predictions.shape
-    all_predictions = all_predictions.view(a_p_shape[0] * a_p_shape[1], a_p_shape[2], a_p_shape[3], a_p_shape[4])
-    all_depths = torch.stack(all_depths); a_d_shape = all_depths.shape
-    all_depths = all_depths.view(a_d_shape[0] * a_d_shape[1], a_d_shape[2], a_d_shape[3], a_d_shape[4])
+    all_predictions = torch.cat(all_predictions, dim = 0)
+    all_depths = torch.cat(all_depths, dim = 0)
 
     metrics = evaluate_predictions(all_predictions, all_depths)
 
