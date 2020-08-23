@@ -7,40 +7,43 @@ from math import exp
 from collections import namedtuple
 
 
-class Vgg16(torch.nn.Module):
+class LossNetwork(torch.nn.Module):
   '''
   This has to receive a tensor between 0 and 1, normalized by Image mean and SD
   '''
   def __init__(self, requires_grad=False):
-    super(Vgg16, self).__init__()
-    vgg_pretrained_features = models.vgg16(pretrained=True).features
+    super(LossNetwork, self).__init__()
+
+    resnet50 = models.resnet50(pretrained = True)
+    modules=list(resnet50.children())[:-1]
+    resnet50=nn.Sequential(*modules)
     self.slice1 = torch.nn.Sequential()
     self.slice2 = torch.nn.Sequential()
     self.slice3 = torch.nn.Sequential()
     self.slice4 = torch.nn.Sequential()
-    for x in range(4):
-        self.slice1.add_module(str(x), vgg_pretrained_features[x])
-    for x in range(4, 9):
-        self.slice2.add_module(str(x), vgg_pretrained_features[x])
-    for x in range(9, 16):
-        self.slice3.add_module(str(x), vgg_pretrained_features[x])
-    for x in range(16, 23):
-        self.slice4.add_module(str(x), vgg_pretrained_features[x])
+    for x in range(0,5):
+      self.slice1.add_module(str(x), resnet50[x])
+    for x in range(5,6):
+      self.slice2.add_module(str(x), resnet50[x])
+    for x in range(6,7):
+      self.slice3.add_module(str(x), resnet50[x])
+    for x in range(7,8):
+      self.slice4.add_module(str(x), resnet50[x])
     if not requires_grad:
-        for param in self.parameters():
-            param.requires_grad = False
+      for param in self.parameters():
+        param.requires_grad = False
 
   def forward(self, X):
     h = self.slice1(X)
-    h_relu1_2 = h
+    h_res_1 = h
     h = self.slice2(h)
-    h_relu2_2 = h
+    h_res_2 = h
     h = self.slice3(h)
-    h_relu3_3 = h
+    h_res_3 = h
     h = self.slice4(h)
-    h_relu4_3 = h
-    vgg_outputs = namedtuple("VggOutputs", ['relu1_2', 'relu2_2', 'relu3_3', 'relu4_3'])
-    out = vgg_outputs(h_relu1_2, h_relu2_2, h_relu3_3, h_relu4_3)
+    h_res_4 = h
+    outputs = namedtuple("ResidualOutputs", ['res1', 'res2', 'res3', 'res4'])
+    out = outputs(h_res_1, h_res_2, h_res_3, h_res_4)
     return out
 
 """
