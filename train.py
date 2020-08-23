@@ -24,7 +24,7 @@ class Trainer():
     self.resized = resized
     self.test_data = get_test_data(test_zip_path) # (samples, crop)
 
-  def train_and_evaluate(self, config, checkpoint_file = '', local = False):
+  def train_and_evaluate(self, config, checkpoint = None):
     batch_size = config['batch_size']
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -41,22 +41,18 @@ class Trainer():
     
 
     loss_model = Vgg16().to(device)
-  
-    if local:
-      print('Loading checkpoint from local storage:',checkpoint_file)
-      load_checkpoint(checkpoint_file, model, optimizer)
-      print('Loaded checkpoint from local storage:',checkpoint_file)    
-
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = config['lr_scheduler_step_size'], gamma = 0.1)
-    for i in range(config['start_epoch']):
-      lr_scheduler.step() # step the scheduler for the already done epochs
-    print('Training...')  
       
     wandb_step = config['start_epoch'] * num_batches -1 
 
     accumulated_per_pixel_loss = RunningAverage()
     accumulated_feature_loss = RunningAverage()
     accumulated_iteration_time = RunningAverage()
+
+    if checkpoint:
+      load_checkpoint(checkpoint, model, optimizer)
+
+    print('Training...')  
+
     for epoch in range(config['start_epoch'], config['epochs']):
       epoch_start_time = time.time()
       for iteration, batch in enumerate(train_dataloader):
@@ -102,11 +98,10 @@ class Trainer():
                                
       epoch_end_time = time.time()
       print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
-      lr_scheduler.step() 
       torch.cuda.empty_cache()
 
-      save_epoch({'state_dict': model.state_dict(), 	
-                  'optim_dict': optimizer.state_dict()}, epoch_index = epoch)
+      save_checkpoint({'state_dict': model.state_dict(), 	
+                  'optim_dict': optimizer.state_dict()}, 'experiments', True)
 
       print('Epoch %d saved to cloud\n\n' % (epoch))
 
