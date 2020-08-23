@@ -14,7 +14,7 @@ class LossNetwork(torch.nn.Module):
   def __init__(self, requires_grad=False):
     super(LossNetwork, self).__init__()
 
-    resnet50 = models.resnet50(pretrained = True)
+    resnet50 = models.resnet50(pretrained = True, progress = False)
     modules=list(resnet50.children())[:-1]
     resnet50=nn.Sequential(*modules)
     self.slice1 = torch.nn.Sequential()
