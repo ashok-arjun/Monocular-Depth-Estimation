@@ -109,8 +109,8 @@ class Trainer():
 
       # EVALUATE ON TEST DATA:
 
-      test_metrics = evaluate_list(model, self.test_data[0], self.test_data[1], config['test_batch_size'], model_upsample = True)
-      self.write_metrics(test_metrics, wandb_step, train=False)
+#       test_metrics = evaluate_list(model, self.test_data[0], self.test_data[1], config['test_batch_size'], model_upsample = True)
+#       self.write_metrics(test_metrics, wandb_step, train=False)
 
       random_indices = np.random.choice(len(self.test_data[0]), config['log_images_count'])
       log_images = torch.cat([self.test_data[0][i]['img'].unsqueeze(0) for i in random_indices], dim = 0)
