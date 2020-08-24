@@ -100,8 +100,10 @@ class Trainer():
       print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
       torch.cuda.empty_cache()
 
-      save_checkpoint({'state_dict': model.state_dict(), 	
-                  'optim_dict': optimizer.state_dict()}, 'experiments', True)
+      save_checkpoint({
+                  'iteration': wandb_step,
+                  'state_dict': model.state_dict(), 	
+                  'optim_dict': optimizer.state_dict()}, config['checkpoint_dir'], (epoch % config['save_to_cloud_every'] == 0))
 
       print('Epoch %d saved to cloud\n\n' % (epoch))
 
