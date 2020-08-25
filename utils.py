@@ -118,6 +118,7 @@ def load_checkpoint(checkpoint, model, optimizer=None):
     if not os.path.exists(checkpoint):
         raise("File doesn't exist {}".format(checkpoint))
     checkpoint = torch.load(checkpoint)
+    print('Restoring checkpoint from net iteration %d' % (checkpoint['iteration']))
     model.load_state_dict(checkpoint['state_dict'])
     optimizer.load_state_dict(checkpoint['optim_dict'])
 
