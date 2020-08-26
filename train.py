@@ -36,7 +36,6 @@ class Trainer():
       model = MonocularDepthModelWithUpconvolution(model)
     model = model.to(device)
     params = [param for param in model.parameters() if param.requires_grad == True]
-    print('A total of %d parameters in present model' % (len(params)))
     optimizer = torch.optim.Adam(params, config['lr'])
     
 
