@@ -108,12 +108,10 @@ class RunningAverage():
 
 
 def save_checkpoint(state, checkpoint_dir, save_to_cloud = False):
-  # modify
   filename = 'last.pth.tar'
 #   torch.save(state, os.path.join(checkpoint_dir, filename))
   torch.save(state, os.path.join(wandb.run.dir, filename))
   if save_to_cloud:
-    torch.save(state, os.path.join(wandb.run.dir, filename))
     wandb.save(filename)
 
 def load_checkpoint(checkpoint, model, optimizer=None):
@@ -122,7 +120,7 @@ def load_checkpoint(checkpoint, model, optimizer=None):
     checkpoint = torch.load(checkpoint)
     print('Restoring checkpoint from net iteration %d' % (checkpoint['iteration']))
     model.load_state_dict(checkpoint['state_dict'])
-    optimizer.load_state_dict(checkpoint['optim_dict'])
+    if optimizer: optimizer.load_state_dict(checkpoint['optim_dict'])
 
 def normalize_batch(batch):
     # normalize a tensor in [0,1] using imagenet mean and std
