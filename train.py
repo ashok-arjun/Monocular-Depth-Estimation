@@ -105,7 +105,7 @@ class Trainer():
                   'state_dict': model.state_dict(), 	
                   'optim_dict': optimizer.state_dict()}, config['checkpoint_dir'], (epoch % config['save_to_cloud_every'] == 0))
 
-      print('Epoch %d saved to cloud\n\n' % (epoch))
+      print('Epoch %d saved\n\n' % (epoch))
 
       # EVALUATE ON TEST DATA:
 
