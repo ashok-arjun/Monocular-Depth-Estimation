@@ -1,12 +1,14 @@
 import numpy as np
 import torch 
 import time
-from model.metrics import evaluate_predictions
-from model.loss import combined_loss
-from utils import RunningAverage
 import datetime
+import argparse
 
 from torch.nn import Upsample
+from model.net import MonocularDepthModel
+from model.dataloader import get_test_data
+from model.metrics import evaluate_predictions
+from model.loss import combined_loss
 from utils import *
 
 class AverageMetrics:
@@ -101,3 +103,35 @@ def evaluate_list(model, samples, crop, batch_size, model_upsample=True):
     metrics = evaluate_predictions(all_predictions, all_depths)
 
     return metrics
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='Evaluation of depth estimation model on either test data/own images')
+  parser.add_argument('--model', help='Model checkpoint path', required=True)
+  parser.add_argument('--data', help='Test data zip path(If evaluation on test data)')
+  parser.add_argument('--img', help='Image path(If evaluation on a single image)')
+  parser.add_argument('--batch_size', type=int, help='Batch size to process the test data', default = 6)
+  parser.add_argument('--output_dir', help='Directory to save output depth images', default = 'outputs')
+
+  args = parser.parse_args()
+
+  if (args.data is None and args.img is None) or (args.data and args.img):
+    raise Exception('Please provide either the test .zip path or a single image\'s path')
+
+  device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+  model = MonocularDepthModel().to(device) 
+  load_checkpoint(args.model, model)  
+
+  if args.data:
+    print('Evaluating on test data...')
+    samples, crop = get_test_data(args.data)  
+    test_metrics = evaluate_list(model, samples, crop, args.batch_size, model_upsample = True)
+    for key, value in test_metrics.items():	
+      print('Test %s: %f' % (key, value))
+  elif args.img:
+    print('Evaluating on a single image...')
+    # convert image to PIL image and then to Tensor
+    # pass to infer_depth
+    # convert back, and colormap apply
+    if not os.path.isdir(args.output_dir):
+      os.mkdir(args.output_dir)
+    # matplotlib save

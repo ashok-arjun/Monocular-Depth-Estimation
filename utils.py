@@ -117,7 +117,7 @@ def save_checkpoint(state, checkpoint_dir, save_to_cloud = False):
 
 def load_checkpoint(checkpoint, model, optimizer=None):
     if not os.path.exists(checkpoint):
-        raise("File doesn't exist {}".format(checkpoint))
+        raise Exception("File doesn't exist {}".format(checkpoint))
     checkpoint = torch.load(checkpoint)
     print('Restoring checkpoint from net iteration %d' % (checkpoint['iteration']))
     model.load_state_dict(checkpoint['state_dict'])
