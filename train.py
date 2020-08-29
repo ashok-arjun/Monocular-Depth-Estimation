@@ -150,3 +150,24 @@ class Trainer():
     del depth_plots	
     del pred_plots	
     del difference
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='Training of depth estimation model')
+  # required args
+  parser.add_argument('--data_dir', help='Train directory path - should contain the \'data\' folder', required = True)
+  parser.add_argument('--batch_size', type=int, help='Batch size to process the train data', required = True)
+  parser.add_argument('--checkpoint_dir', help='Directory to save checkpoints in', required = True)
+  parser.add_argument('--epochs', help = 'Number of epochs', required = True)
+  # optional args(w/ default values)
+  parser.add_argument('--model', help='Model checkpoint path', default = None)
+  parser.add_argument('--lr', help = 'Learning rate', default = 3e-4)
+  parser.add_argument('--log_interval', help = 'Interval to print the avg. loss and metrics', default = 50)
+
+  args = parser.parse_args()
+
+  if not os.path.isdir(args.output_dir):
+    os.mkdir(args.checkpoint_dir)
+
+  # invoke model and start train
+
+
