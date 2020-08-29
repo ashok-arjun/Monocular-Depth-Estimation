@@ -3,6 +3,8 @@ import torch
 import time
 import datetime
 import argparse
+from PIL import Image
+import torchvision.transforms as T
 
 from torch.nn import Upsample
 from model.net import MonocularDepthModel
@@ -129,9 +131,12 @@ if __name__ == '__main__':
       print('Test %s: %f' % (key, value))
   elif args.img:
     print('Evaluating on a single image...')
-    # convert image to PIL image and then to Tensor
-    # pass to infer_depth
-    # convert back, and colormap apply
+    image = Image.open(args.img)
+    image = T.ToTensor()(image)
+    depth = infer_depth(image, model, upsample = True)    
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    depth_plot = plot_depth(ax, plot_batch_depths(depth)[0])
     if not os.path.isdir(args.output_dir):
       os.mkdir(args.output_dir)
-    # matplotlib save
+    fig.savefig(os.path.join(args.output_dir, 'depth_output.png')) 
