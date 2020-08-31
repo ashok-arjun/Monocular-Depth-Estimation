@@ -92,14 +92,3 @@ class MonocularDepthModel(nn.Module):
 
   def forward(self, images):
     return torch.sigmoid(self.decoder(self.encoder(images)))
-
-class MonocularDepthModelWithUpconvolution(nn.Module):
-  def __init__(self, pretrained_depth_model):
-    super(MonocularDepthModelWithUpconvolution, self).__init__()
-    self.pretrained_depth_model = pretrained_depth_model
-    for param in self.pretrained_depth_model.parameters():
-      param.requires_grad = False
-    self.upconv2x = nn.ConvTranspose2d(in_channels = 1, out_channels = 1, kernel_size = 5, stride = 2, padding = 2, output_padding = 1)  
-
-  def forward(self, images):
-    return torch.sigmoid(self.upconv2x(self.pretrained_depth_model(images)))
