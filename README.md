@@ -23,7 +23,7 @@ This project addresses the problem of estimating the depth of a scene from the 2
 
 # Pre-trained models
 
-[Pretrained Model](https://1drv.ms/u/s!AlYxAnPCKqHhgxNdQLu_icSxf-rs?e=lF4CMH) - 132 MB
+The pretrained model can be downloaded from [this google drive link](https://drive.google.com/file/d/1qZcWoGTTVgqUkyiLq36E-YhOnqYIKkIm/view?usp=sharing). It has been trained for **18 epochs**, taking **20 hours** to train.
 
 # Instructions
 <details>
