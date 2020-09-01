@@ -38,8 +38,7 @@ class AverageMetrics:
     'log10_error':self.log10_error()}    
 
 def infer_depth(image_tensor, model, upsample = True):
-  '''Image_tensor should be of shape C * H * W (and between 0 and 1) and H,W should be divisible by 32 perfectly.
-  If true depth is provided, it should also be a tensor(resized to the model prediction size)'''
+  '''Image_tensor should be of shape C * H * W (and between 0 and 1) and H,W should be divisible by 32 perfectly.'''
   device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
   model = model.to(device)
   model.eval()
@@ -131,7 +130,8 @@ if __name__ == '__main__':
       print('Test %s: %f' % (key, value))
   elif args.img:
     print('Evaluating on a single image...')
-    image = Image.open(args.img)
+    if ''.join(list(args.img)[-3:]) == 'png': raise Exception('Only JPEG/JPG Images are allowed. Please convert your image.') 
+    image = (Image.open(args.img))
     image = T.ToTensor()(image)
     depth = infer_depth(image, model, upsample = True)    
     fig = plt.figure()
