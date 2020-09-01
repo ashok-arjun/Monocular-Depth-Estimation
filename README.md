@@ -54,6 +54,7 @@ You don't have to extract the zip files, as the code loads the entire zip file i
 <summary>
 Training
 </summary>
+  
 The script ```train.py``` contains the code for training the model. It can be invoked with the following arguments:
   
 ```
