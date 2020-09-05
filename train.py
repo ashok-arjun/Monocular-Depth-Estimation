@@ -5,8 +5,11 @@ import wandb
 
 import numpy as np
 import torch 
+import matplotlib.pyplot as plt
 import torch.nn as nn
 import torch.nn.functional as F
+import os
+from PIL import Image
 import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 
@@ -135,12 +138,21 @@ class Trainer():
       for key in writing_metrics:	
         wandb.log({'Test '+key: metrics[key]}, step = wandb_step) 
 
+  def get_with_colormap(plots):
+    images = []
+    for plot in plots:
+      plt.imsave('_.png', plot, cmap='jet')
+      img = Image.open('_.png')
+      os.remove('_.png')
+      images.append(img)
+    return images
+        
   def compare_predictions(self, images, depths, predictions, wandb_step):	
     image_plots = plot_batch_images(images)	
-    depth_plots = plot_batch_depths(depths)	
-    pred_plots = plot_batch_depths(predictions)	
-    difference = plot_batch_depths(torch.abs(depths.cpu() - predictions.cpu()))	
-
+    depth_plots = get_with_colormap(plot_batch_depths(depths))	
+    pred_plots = get_with_colormap(plot_batch_depths(predictions))	
+    difference = get_with_colormap(plot_batch_depths(torch.abs(depths.cpu() - predictions.cpu())))  
+    
     wandb.log({"Sample Validation images": [wandb.Image(image_plot) for image_plot in image_plots]}, step = wandb_step)	
     wandb.log({"Sample Validation depths": [wandb.Image(image_plot) for image_plot in depth_plots]}, step = wandb_step)	
     wandb.log({"Sample Validation predictions": [wandb.Image(image_plot) for image_plot in pred_plots]}, step = wandb_step)	
