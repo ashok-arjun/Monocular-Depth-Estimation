@@ -75,7 +75,7 @@ class Trainer():
         per_pixel_loss = combined_loss(predictions, depths)
         accumulated_per_pixel_loss.update(per_pixel_loss, images.shape[0])
 
-        feature_loss = mean_l2_loss(feature_losses_predictions.res3, feature_losses_depths.res3)
+        feature_loss = config['perceptual_weight'] * mean_l2_loss(feature_losses_predictions.res1, feature_losses_depths.res1)
         accumulated_feature_loss.update(feature_loss, images.shape[0])
 
         total_loss = per_pixel_loss + feature_loss
