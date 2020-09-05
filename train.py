@@ -138,6 +138,7 @@ class Trainer():
       for key in writing_metrics:	
         wandb.log({'Test '+key: metrics[key]}, step = wandb_step) 
 
+        
   def get_with_colormap(plots):
     images = []
     for plot in plots:
