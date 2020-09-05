@@ -57,46 +57,46 @@ class Trainer():
 
     for epoch in range(config['start_epoch'], config['epochs']):
       epoch_start_time = time.time()
-      for iteration, batch in enumerate(train_dataloader):
-        wandb_step += 1
-        model.train() 
-        time_start = time.time()        
+#       for iteration, batch in enumerate(train_dataloader):
+#         wandb_step += 1
+#         model.train() 
+#         time_start = time.time()        
 
-        optimizer.zero_grad()
-        images, depths = batch['img'], batch['depth']
-        images = normalize_batch(torch.autograd.Variable(images.to(device)))
-        depths = torch.autograd.Variable(depths.to(device))
+#         optimizer.zero_grad()
+#         images, depths = batch['img'], batch['depth']
+#         images = normalize_batch(torch.autograd.Variable(images.to(device)))
+#         depths = torch.autograd.Variable(depths.to(device))
 
-        predictions = model(images)
+#         predictions = model(images)
 
-        predictions_normalized = normalize_batch(predictions)
-        depths_normalized = normalize_batch(depths)
+#         predictions_normalized = normalize_batch(predictions)
+#         depths_normalized = normalize_batch(depths)
 
-        feature_losses_predictions = loss_model(predictions_normalized)
-        feature_losses_depths = loss_model(depths_normalized)
+#         feature_losses_predictions = loss_model(predictions_normalized)
+#         feature_losses_depths = loss_model(depths_normalized)
 
-        per_pixel_loss = combined_loss(predictions, depths)
-        accumulated_per_pixel_loss.update(per_pixel_loss, images.shape[0])
+#         per_pixel_loss = combined_loss(predictions, depths)
+#         accumulated_per_pixel_loss.update(per_pixel_loss, images.shape[0])
 
-        feature_loss = config['perceptual_weight'] * mean_l2_loss(feature_losses_predictions.res1, feature_losses_depths.res1)
-        accumulated_feature_loss.update(feature_loss, images.shape[0])
+#         feature_loss = config['perceptual_weight'] * mean_l2_loss(feature_losses_predictions.res1, feature_losses_depths.res1)
+#         accumulated_feature_loss.update(feature_loss, images.shape[0])
 
-        total_loss = per_pixel_loss + feature_loss
-        total_loss.backward()
-        optimizer.step()
+#         total_loss = per_pixel_loss + feature_loss
+#         total_loss.backward()
+#         optimizer.step()
 
-        time_end = time.time()
-        accumulated_iteration_time.update(time_end - time_start)
-        eta = str(datetime.timedelta(seconds = int(accumulated_iteration_time() * (num_batches - iteration))))
+#         time_end = time.time()
+#         accumulated_iteration_time.update(time_end - time_start)
+#         eta = str(datetime.timedelta(seconds = int(accumulated_iteration_time() * (num_batches - iteration))))
 
-        if iteration % config['log_interval'] == 0: 
-          print(datetime.datetime.now(pytz.timezone('Asia/Kolkata')), end = ': ')
-          print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta))
-          print('Average per-pixel loss: %f; Average feature loss: %f' % (accumulated_per_pixel_loss(), accumulated_feature_loss()))
-          wandb.log({'Average per-pixel loss': accumulated_per_pixel_loss()}, step = wandb_step)
-          wandb.log({'Average feature loss': accumulated_feature_loss()}, step = wandb_step)
-          metrics = evaluate_predictions(predictions, depths)
-          self.write_metrics(metrics, wandb_step = wandb_step, train = True)
+#         if iteration % config['log_interval'] == 0: 
+#           print(datetime.datetime.now(pytz.timezone('Asia/Kolkata')), end = ': ')
+#           print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta))
+#           print('Average per-pixel loss: %f; Average feature loss: %f' % (accumulated_per_pixel_loss(), accumulated_feature_loss()))
+#           wandb.log({'Average per-pixel loss': accumulated_per_pixel_loss()}, step = wandb_step)
+#           wandb.log({'Average feature loss': accumulated_feature_loss()}, step = wandb_step)
+#           metrics = evaluate_predictions(predictions, depths)
+#           self.write_metrics(metrics, wandb_step = wandb_step, train = True)
                                
       epoch_end_time = time.time()
       print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
@@ -122,13 +122,6 @@ class Trainer():
 
 
   def write_metrics(self, metrics, wandb_step, train = True):	
-    # if train:	
-    #   for key, value in metrics.items():	
-    #     wandb.log({'Train '+key: value}, step = wandb_step)	
-    # else:	
-    #   for key, value in metrics.items():	
-    #     wandb.log({'Test '+key: value}, step = wandb_step) 	
-
     writing_metrics = ['d1_accuracy', 'rmse']
 
     if train:	
