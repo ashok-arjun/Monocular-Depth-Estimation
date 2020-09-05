@@ -25,7 +25,7 @@ class Trainer():
   def __init__(self, data_path, test_zip_path, resized):
     self.dataloaders = DataLoaders(data_path, resized = resized)  
     self.resized = resized
-#     self.test_data = get_test_data(test_zip_path) # (samples, crop)
+    self.test_data = get_test_data(test_zip_path) # (samples, crop)
 
   def train_and_evaluate(self, config, checkpoint = None):
     batch_size = config['batch_size']
@@ -111,14 +111,14 @@ class Trainer():
 
       # EVALUATE ON TEST DATA:
 
-#       test_metrics = evaluate_list(model, self.test_data[0], self.test_data[1], config['test_batch_size'], model_upsample = True)
-#       self.write_metrics(test_metrics, wandb_step, train=False)
+      test_metrics = evaluate_list(model, self.test_data[0], self.test_data[1], config['test_batch_size'], model_upsample = True)
+      self.write_metrics(test_metrics, wandb_step, train=False)
 
-#       random_indices = np.random.choice(len(self.test_data[0]), config['log_images_count'])
-#       log_images = torch.cat([self.test_data[0][i]['img'].unsqueeze(0) for i in random_indices], dim = 0)
-#       log_depths = torch.cat([self.test_data[0][i]['depth'].unsqueeze(0) for i in random_indices], dim = 0)
-#       log_preds = torch.cat([infer_depth(img, model, upsample = True)[0].unsqueeze(0) for img in log_images], dim = 0)
-#       self.compare_predictions(log_images, log_depths, log_preds, wandb_step)
+      random_indices = np.random.choice(len(self.test_data[0]), config['log_images_count'])
+      log_images = torch.cat([self.test_data[0][i]['img'].unsqueeze(0) for i in random_indices], dim = 0)
+      log_depths = torch.cat([self.test_data[0][i]['depth'].unsqueeze(0) for i in random_indices], dim = 0)
+      log_preds = torch.cat([infer_depth(img, model, upsample = True)[0].unsqueeze(0) for img in log_images], dim = 0)
+      self.compare_predictions(log_images, log_depths, log_preds, wandb_step)
 
 
   def write_metrics(self, metrics, wandb_step, train = True):	
