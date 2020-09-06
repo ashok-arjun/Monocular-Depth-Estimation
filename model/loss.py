@@ -18,17 +18,17 @@ class LossNetwork(torch.nn.Module):
     modules=list(resnet50.children())[:-1]
     resnet50=nn.Sequential(*modules)
     self.slice1 = torch.nn.Sequential()
-    self.slice2 = torch.nn.Sequential()
-    self.slice3 = torch.nn.Sequential()
-    self.slice4 = torch.nn.Sequential()
+#     self.slice2 = torch.nn.Sequential()
+#     self.slice3 = torch.nn.Sequential()
+#     self.slice4 = torch.nn.Sequential()
     for x in range(0,5):
       self.slice1.add_module(str(x), resnet50[x])
-    for x in range(5,6):
-      self.slice2.add_module(str(x), resnet50[x])
-    for x in range(6,7):
-      self.slice3.add_module(str(x), resnet50[x])
-    for x in range(7,8):
-      self.slice4.add_module(str(x), resnet50[x])
+#     for x in range(5,6):
+#       self.slice2.add_module(str(x), resnet50[x])
+#     for x in range(6,7):
+#       self.slice3.add_module(str(x), resnet50[x])
+#     for x in range(7,8):
+#       self.slice4.add_module(str(x), resnet50[x])
     if not requires_grad:
       for param in self.parameters():
         param.requires_grad = False
@@ -36,14 +36,14 @@ class LossNetwork(torch.nn.Module):
   def forward(self, X):
     h = self.slice1(X)
     h_res_1 = h
-    h = self.slice2(h)
-    h_res_2 = h
-    h = self.slice3(h)
-    h_res_3 = h
-    h = self.slice4(h)
-    h_res_4 = h
-    outputs = namedtuple("ResidualOutputs", ['res1', 'res2', 'res3', 'res4'])
-    out = outputs(h_res_1, h_res_2, h_res_3, h_res_4)
+#     h = self.slice2(h)
+#     h_res_2 = h
+#     h = self.slice3(h)
+#     h_res_3 = h
+#     h = self.slice4(h)
+#     h_res_4 = h
+    outputs = namedtuple("ResidualOutputs", ['res1'])
+    out = outputs(h_res_1)
     return out
 
 """
