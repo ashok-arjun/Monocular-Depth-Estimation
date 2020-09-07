@@ -25,6 +25,7 @@ class Trainer():
   def __init__(self, data_path, test_data_path, resized):
     self.dataloaders = DataLoaders(data_path, resized = resized)  
     self.resized = resized
+    self.test_data_path = test_data_path
 
   def train_and_evaluate(self, config, checkpoint = None):
     batch_size = config['batch_size']
@@ -33,7 +34,7 @@ class Trainer():
     train_dataloader = self.dataloaders.get_train_dataloader(batch_size = batch_size) 
     num_batches = len(train_dataloader)
 
-    test_dataloader = get_test_dataloader(test_data_path, config['test_batch_size'])
+    test_dataloader = get_test_dataloader(self.test_data_path, config['test_batch_size'])
     
     model = MonocularDepthModel()
     if self.resized == False:
