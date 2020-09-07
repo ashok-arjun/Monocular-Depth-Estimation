@@ -160,12 +160,3 @@ class DataLoaders:
                                                   shuffle = shuffle,
                                                   num_workers = 0) 
     return train_dataloader
-  
-  def get_test_dataloader(self, batch_size, shuffle = True):
-
-    test_dataset = NYUDepthTestDataset(self.data_dir, get_test_transforms())
-    test_dataloader = torch.utils.data.DataLoader(test_dataset, 
-                                                  batch_size = batch_size,
-                                                  shuffle = shuffle,
-                                                  num_workers = 0) 
-    return test_dataloader
