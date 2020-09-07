@@ -34,7 +34,7 @@ class Trainer():
     train_dataloader = self.dataloaders.get_train_dataloader(batch_size = batch_size) 
     num_batches = len(train_dataloader)
 
-    test_dataloader = get_test_dataloader(self.test_data_path, config['test_batch_size'])
+    test_dataloader = get_test_dataloader(self.test_data_path, config['test_batch_size'], shuffle=True)
     
     model = MonocularDepthModel()
     if self.resized == False:
@@ -116,9 +116,9 @@ class Trainer():
       test_metrics = evaluate(model, test_dataloader, model_upsample = True)
       self.write_metrics(test_metrics, wandb_step, train=False)
 
-      random_indices = np.random.choice(len(self.test_data[0]), config['log_images_count'])
-      log_images = torch.cat([self.test_data[0][i]['img'].unsqueeze(0) for i in random_indices], dim = 0)
-      log_depths = torch.cat([self.test_data[0][i]['depth'].unsqueeze(0) for i in random_indices], dim = 0)
+      random_test_batch = next(iter(test_dataloader))
+      log_images = random_test_batch[0]['img']
+      log_depths = random_test_batch[0]['depth']
       log_preds = torch.cat([infer_depth(img, model, upsample = True)[0].unsqueeze(0) for img in log_images], dim = 0)
       self.compare_predictions(log_images, log_depths, log_preds, wandb_step)
 
