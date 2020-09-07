@@ -116,6 +116,25 @@ class NYUDepthDatasetRaw(torch.utils.data.Dataset):
   def __len__(self):   
     return len(self.dataset)
 
+class NYUDepthTestDataset(torch.utils.data.Dataset):
+  def __init__(self, data_dir, transforms):
+    self.data_dir = data_dir
+    self.transforms = transforms
+    
+    rgb = np.load(os.path.join(data_dir, 'eigen_test_rgb.npy'))
+    depth = np.load(os.path.join(data_dir, 'eigen_test_depth.npy'))
+    crop = np.load(os.path.join(data_dir, 'eigen_test_crop.npy')) 
+    depth = np.clip(depth, 1.0, 10.0) / 10 * 255     
+
+  def __getitem__(self, i):
+    img = Image.fromarray(rgb[i].astype(np.uint8), mode = 'RGB')
+    img_depth = Image.fromarray(depth[i].astype(np.uint8)[:,:], mode='L')
+    sample = {'img':img, 'depth':img_depth}
+    sample = self.transforms(sample)
+    return sample
+    
+  def __len__(self):   
+    return self.rgb.shape[0]  
 
 def get_train_transforms():
   return T.Compose([RandomHorizontalFlip(), RandomChannelSwap(), ToTensor()])
@@ -141,3 +160,12 @@ class DataLoaders:
                                                   shuffle = shuffle,
                                                   num_workers = 0) 
     return train_dataloader
+  
+  def get_test_dataloader(self, batch_size, shuffle = True):
+
+    test_dataset = NYUDepthTestDataset(self.data_dir, get_test_transforms())
+    test_dataloader = torch.utils.data.DataLoader(test_dataset, 
+                                                  batch_size = batch_size,
+                                                  shuffle = shuffle,
+                                                  num_workers = 0) 
+    return test_dataloader
