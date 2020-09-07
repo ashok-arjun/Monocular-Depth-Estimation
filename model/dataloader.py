@@ -12,24 +12,13 @@ from itertools import permutations
 import csv
 
 
-def get_test_data(path):
-  input_zip = ZipFile(path)
-  data = {name: input_zip.read(name) for name in input_zip.namelist()}
-
-  rgb = np.load(BytesIO(data['eigen_test_rgb.npy']))
-  depth = np.load(BytesIO(data['eigen_test_depth.npy']))
-  crop = np.load(BytesIO(data['eigen_test_crop.npy'])) 
-  depth = np.clip(depth, 1.0, 10.0) / 10 * 255 
-
-  toTensorFunc = ToTensor()
-  samples = []
-  for i in range(rgb.shape[0]):
-    img = Image.fromarray(rgb[i].astype(np.uint8), mode = 'RGB')
-    img_depth = Image.fromarray(depth[i].astype(np.uint8)[:,:], mode='L')
-    sample = {'img':img, 'depth':img_depth}
-    samples.append(toTensorFunc(sample = sample))
-  del data # frees memory
-  return samples, torch.from_numpy(crop)    
+def get_test_data(data_dir, batch_size):
+  dataset = NYUDepthTestDataset(data_dir, get_test_tranforms())
+  dataloader = torch.utils.data.DataLoader(dataset, 
+                                          batch_size = batch_size,
+                                          shuffle = False,
+                                          num_workers = 0) 
+  return dataloader
 
 
 class RandomHorizontalFlip(object):
