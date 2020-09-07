@@ -145,7 +145,7 @@ class DataLoaders:
 
 
 def get_test_dataloader(data_dir, batch_size):
-  dataset = NYUDepthTestDataset(data_dir, get_test_tranforms())
+  dataset = NYUDepthTestDataset(data_dir, get_test_transforms())
   dataloader = torch.utils.data.DataLoader(dataset, 
                                           batch_size = batch_size,
                                           shuffle = False,
