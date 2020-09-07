@@ -70,7 +70,7 @@ def evaluate(model, test_dataloader, model_upsample=True):
       
       images = batch[0]['img']
       depths = batch[0]['depth']
-      crop = batch[1]
+      crop = batch[1][0].cpu().numpy()
       
       images = torch.autograd.Variable(images.to(device))
       depths = torch.autograd.Variable(depths.to(device))
