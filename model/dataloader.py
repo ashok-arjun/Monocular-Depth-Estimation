@@ -121,17 +121,17 @@ class NYUDepthTestDataset(torch.utils.data.Dataset):
     self.data_dir = data_dir
     self.transforms = transforms
     
-    rgb = np.load(os.path.join(data_dir, 'eigen_test_rgb.npy'))
-    depth = np.load(os.path.join(data_dir, 'eigen_test_depth.npy'))
-    crop = np.load(os.path.join(data_dir, 'eigen_test_crop.npy')) 
-    depth = np.clip(depth, 1.0, 10.0) / 10 * 255     
+    self.rgb = np.load(os.path.join(data_dir, 'eigen_test_rgb.npy'))
+    self.depth = np.clip(np.load(os.path.join(data_dir, 'eigen_test_depth.npy')), 1.0, 10.0) / 10 * 255 
+    self.crop = np.load(os.path.join(data_dir, 'eigen_test_crop.npy')) 
+        
 
   def __getitem__(self, i):
-    img = Image.fromarray(rgb[i].astype(np.uint8), mode = 'RGB')
-    img_depth = Image.fromarray(depth[i].astype(np.uint8)[:,:], mode='L')
+    img = Image.fromarray(self.rgb[i].astype(np.uint8), mode = 'RGB')
+    img_depth = Image.fromarray(self.depth[i].astype(np.uint8)[:,:], mode='L')
     sample = {'img':img, 'depth':img_depth}
     sample = self.transforms(sample)
-    return sample
+    return sample, self.crop
     
   def __len__(self):   
     return self.rgb.shape[0]  
