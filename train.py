@@ -112,7 +112,7 @@ class Trainer():
 
       # EVALUATE ON TEST DATA:
 
-      test_metrics = evaluate(model, test_dataloader , model_upsample = True)
+      test_metrics = evaluate(model, test_dataloader, model_upsample = True)
       self.write_metrics(test_metrics, wandb_step, train=False)
 
       random_indices = np.random.choice(len(self.test_data[0]), config['log_images_count'])
