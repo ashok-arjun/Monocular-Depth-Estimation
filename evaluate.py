@@ -6,7 +6,7 @@ import argparse
 
 from torch.nn import Upsample
 from model.net import MonocularDepthModel
-from model.dataloader import NYUDepthTestDataset, get_test_transforms
+from model.dataloader import get_test_dataloader
 from model.metrics import evaluate_predictions
 from model.loss import combined_loss
 from utils import *
@@ -125,8 +125,7 @@ if __name__ == '__main__':
 
   if args.data_dir:
     print('Evaluating on test data...')
-    dataset = NYUDepthTestDataset(args.data_dir, get_test_transforms())
-    dataloader = torch.data.utils.Dataloader(dataset, batch_size = args.batch_size, shuffle = False, num_workers = 0)
+    dataloader = get_test_dataloader(args.data_dir, args.batch_size)
     test_metrics = evaluate_list(model, dataloader, args.batch_size, model_upsample = True)
     for key, value in test_metrics.items():	
       print('Test %s: %f' % (key, value))
