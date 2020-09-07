@@ -12,14 +12,6 @@ from itertools import permutations
 import csv
 
 
-def get_test_dataloader(data_dir, batch_size):
-  dataset = NYUDepthTestDataset(data_dir, get_test_tranforms())
-  dataloader = torch.utils.data.DataLoader(dataset, 
-                                          batch_size = batch_size,
-                                          shuffle = False,
-                                          num_workers = 0) 
-  return dataloader
-
 
 class RandomHorizontalFlip(object):
   def __init__(self, prob = 0.5):
@@ -149,3 +141,13 @@ class DataLoaders:
                                                   shuffle = shuffle,
                                                   num_workers = 0) 
     return train_dataloader
+  
+
+
+def get_test_dataloader(data_dir, batch_size):
+  dataset = NYUDepthTestDataset(data_dir, get_test_tranforms())
+  dataloader = torch.utils.data.DataLoader(dataset, 
+                                          batch_size = batch_size,
+                                          shuffle = False,
+                                          num_workers = 0) 
+  return dataloader
