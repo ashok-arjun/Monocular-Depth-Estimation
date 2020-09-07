@@ -17,15 +17,14 @@ from torch.utils.tensorboard import SummaryWriter
 from model.net import MonocularDepthModel, MonocularDepthModelWithUpconvolution  
 from model.loss import LossNetwork, combined_loss, mean_l2_loss
 from model.metrics import evaluate_predictions
-from model.dataloader import DataLoaders, get_test_data
+from model.dataloader import DataLoaders, get_test_dataloader
 from utils import *
-from evaluate import infer_depth, evaluate_list
+from evaluate import infer_depth, evaluate
 
 class Trainer():
-  def __init__(self, data_path, test_zip_path, resized):
+  def __init__(self, data_path, test_data_path, resized):
     self.dataloaders = DataLoaders(data_path, resized = resized)  
     self.resized = resized
-    self.test_data = get_test_data(test_zip_path) # (samples, crop)
 
   def train_and_evaluate(self, config, checkpoint = None):
     batch_size = config['batch_size']
@@ -34,6 +33,8 @@ class Trainer():
     train_dataloader = self.dataloaders.get_train_dataloader(batch_size = batch_size) 
     num_batches = len(train_dataloader)
 
+    test_dataloader = get_test_dataloader(test_data_path, config['test_batch_size'])
+    
     model = MonocularDepthModel()
     if self.resized == False:
       model = MonocularDepthModelWithUpconvolution(model)
@@ -111,7 +112,7 @@ class Trainer():
 
       # EVALUATE ON TEST DATA:
 
-      test_metrics = evaluate_list(model, self.test_data[0], self.test_data[1], config['test_batch_size'], model_upsample = True)
+      test_metrics = evaluate(model, test_dataloader , model_upsample = True)
       self.write_metrics(test_metrics, wandb_step, train=False)
 
       random_indices = np.random.choice(len(self.test_data[0]), config['log_images_count'])
