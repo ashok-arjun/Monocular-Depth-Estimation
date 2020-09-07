@@ -12,7 +12,7 @@ from itertools import permutations
 import csv
 
 
-def get_test_data(data_dir, batch_size):
+def get_test_dataloader(data_dir, batch_size):
   dataset = NYUDepthTestDataset(data_dir, get_test_tranforms())
   dataloader = torch.utils.data.DataLoader(dataset, 
                                           batch_size = batch_size,
