@@ -50,7 +50,7 @@ def infer_depth(image_tensor, model, upsample = True):
     depth = Upsample(scale_factor = 2, mode = 'bilinear', align_corners = True)(depth)
   return depth
 
-def evaluate(model, test_dataloader, batch_size, model_upsample=True):
+def evaluate(model, test_dataloader, model_upsample=True):
   """
   Evaluates on the test data(with the eigen crop). Function created for easy execution of test data(available as a list)
   """
@@ -126,7 +126,7 @@ if __name__ == '__main__':
   if args.data_dir:
     print('Evaluating on test data...')
     dataloader = get_test_dataloader(args.data_dir, args.batch_size)
-    test_metrics = evaluate(model, dataloader, args.batch_size, model_upsample = True)
+    test_metrics = evaluate(model, dataloader, model_upsample = True)
     for key, value in test_metrics.items():	
       print('Test %s: %f' % (key, value))
   elif args.img:
