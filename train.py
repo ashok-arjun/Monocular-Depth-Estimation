@@ -24,7 +24,6 @@ from evaluate import infer_depth, evaluate
 class Trainer():
   def __init__(self, data_path, test_data_path, resized):
     self.dataloaders = DataLoaders(data_path, resized = resized)  
-    self.resized = resized
     self.test_data_path = test_data_path
 
   def train_and_evaluate(self, config, checkpoint = None):
@@ -37,8 +36,6 @@ class Trainer():
     test_dataloader = get_test_dataloader(self.test_data_path, config['test_batch_size'], shuffle=True)
     
     model = MonocularDepthModel()
-    if self.resized == False:
-      model = MonocularDepthModelWithUpconvolution(model)
     model = model.to(device)
     params = [param for param in model.parameters() if param.requires_grad == True]
     optimizer = torch.optim.Adam(params, config['lr'])
