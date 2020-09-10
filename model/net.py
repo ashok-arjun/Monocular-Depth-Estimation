@@ -33,8 +33,8 @@ class Encoder(nn.Module):
     super(Encoder, self).__init__()
     if backbone == 'densenet121':
       self.backbone = torchvision.models.densenet121(pretrained = True, progress = False)
-    elif backbone == 'densenet169':
-      self.backbone = torchvision.models.densenet169(pretrained = True, progress = False)
+    elif backbone == 'densenet161':
+      self.backbone = torchvision.models.densenet161(pretrained = True, progress = False)
 
   def forward(self, images):
     feature_maps = [images]
@@ -47,7 +47,7 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
   def __init__(self, backbone = 'densenet121', delta = 0.5):
     """
-    backbone: densenet121 or densenet169
+    backbone: densenet121 or densenet161
     final_channels represents the number of channels from the last dense block
     delta represents the decay in the number of channels to operate the decoder at
     """
@@ -56,7 +56,7 @@ class Decoder(nn.Module):
     if backbone is 'densenet121':
       final_channels = 1024 
       backbone_in_channels = [256, 128, 64, 64]
-    elif backbone is 'densenet169':
+    elif backbone is 'densenet161':
       final_channels = 2208 
       backbone_in_channels = [384, 192, 96, 96]
       
@@ -91,7 +91,7 @@ class Decoder(nn.Module):
 class MonocularDepthModel(nn.Module):
   def __init__(self, backbone = 'densenet121'):
     super(MonocularDepthModel, self).__init__()
-    if backbone != 'densenet121' and backbone != 'densenet169':
+    if backbone != 'densenet121' and backbone != 'densenet161':
       raise Exception('Backbone %s is not supported' % (backbone))
     self.encoder = Encoder(backbone = backbone)
     self.decoder = Decoder(backbone = backbone)  
