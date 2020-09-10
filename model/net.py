@@ -62,7 +62,7 @@ class Decoder(nn.Module):
       
     self.final_channels = int(final_channels * delta)
 
-    self.conv6 = nn.Conv2d(1024, self.final_channels, kernel_size=1, stride=1, padding=0)   
+    self.conv6 = nn.Conv2d(final_channels, self.final_channels, kernel_size=1, stride=1, padding=0)   
 
     self.bridge1 = Bridge(in_channels = backbone_in_channels[0] + self.final_channels, out_channels = self.final_channels // 2) 
     self.bridge2 = Bridge(in_channels = backbone_in_channels[1] + self.final_channels // 2, out_channels = self.final_channels // 4)  
