@@ -14,7 +14,7 @@ import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 
 
-from model.net import MonocularDepthModel, MonocularDepthModelWithUpconvolution  
+from model.net import MonocularDepthModel
 from model.loss import LossNetwork, combined_loss, mean_l2_loss
 from model.metrics import evaluate_predictions
 from model.dataloader import DataLoaders, get_test_dataloader
