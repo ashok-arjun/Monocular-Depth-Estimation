@@ -35,7 +35,7 @@ class Trainer():
 
     test_dataloader = get_test_dataloader(self.test_data_path, config['test_batch_size'], shuffle=True)
     
-    model = MonocularDepthModel()
+    model = MonocularDepthModel(backbone = config['backbone'])
     model = model.to(device)
     params = [param for param in model.parameters() if param.requires_grad == True]
     optimizer = torch.optim.Adam(params, config['lr'])
