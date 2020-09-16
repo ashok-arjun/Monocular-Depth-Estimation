@@ -29,17 +29,14 @@ class Bridge(nn.Sequential):
     return F.interpolate(x, size = (shape[2], shape[3]), mode='bilinear', align_corners = True)  
 
 class Encoder(nn.Module):
-  def __init__(self):
+  def __init__(self, backbone = 'densenet121'):
     super(Encoder, self).__init__()
-    self.backbone = torchvision.models.densenet121(pretrained = True, progress = False)
+    if backbone == 'densenet121':
+      self.backbone = torchvision.models.densenet121(pretrained = True, progress = False)
+    elif backbone == 'densenet161':
+      self.backbone = torchvision.models.densenet161(pretrained = True, progress = False)
 
   def forward(self, images):
-    """
-    Reference: the keys  of modules in densenet121 are 
-    ['conv0', 'norm0', 'relu0', 'pool0', 'denseblock1', 'transition1', 
-    'denseblock2', 'transition2', 'denseblock3', 'transition3', 'denseblock4', 'norm5']
-    -----------------12 modules in densenet121, + images = 13 modules in total----------------
-    """
     feature_maps = [images]
     
     for module in self.backbone.features._modules.values(): 
@@ -48,24 +45,31 @@ class Encoder(nn.Module):
     return feature_maps  
 
 class Decoder(nn.Module):
-  def __init__(self, final_channels = 1024, delta = 0.5):
+  def __init__(self, backbone = 'densenet121', delta = 0.5):
     """
+    backbone: densenet121 or densenet161
     final_channels represents the number of channels from the last dense block
     delta represents the decay in the number of channels to operate the decoder at
     """
     super(Decoder, self).__init__()
-
+    
+    if backbone is 'densenet121':
+      final_channels = 1024 
+      backbone_in_channels = [256, 128, 64, 64]
+    elif backbone is 'densenet161':
+      final_channels = 2208 
+      backbone_in_channels = [384, 192, 96, 96]
+      
     self.final_channels = int(final_channels * delta)
 
-    self.conv6 = nn.Conv2d(1024,self.final_channels, kernel_size=1, stride=1, padding=0)   # named conv 6, as the final batch normalisation layer is bn5
+    self.conv6 = nn.Conv2d(final_channels, self.final_channels, kernel_size=1, stride=1, padding=0)   
 
-    self.bridge1 = Bridge(in_channels = 256 + self.final_channels, out_channels = self.final_channels // 2) 
-    self.bridge2 = Bridge(in_channels = 128 + self.final_channels // 2, out_channels = self.final_channels // 4)  
-    self.bridge3 = Bridge(in_channels = 64 + self.final_channels // 4, out_channels = self.final_channels // 8)  
-    self.bridge4 = Bridge(in_channels = 64 + self.final_channels // 8, out_channels = self.final_channels // 16) 
-    # self.bridge5 = Bridge(, out_channels = self.final_channels // 32) # requires depth size == image size
+    self.bridge1 = Bridge(in_channels = backbone_in_channels[0] + self.final_channels, out_channels = self.final_channels // 2) 
+    self.bridge2 = Bridge(in_channels = backbone_in_channels[1] + self.final_channels // 2, out_channels = self.final_channels // 4)  
+    self.bridge3 = Bridge(in_channels = backbone_in_channels[2] + self.final_channels // 4, out_channels = self.final_channels // 8)  
+    self.bridge4 = Bridge(in_channels = backbone_in_channels[3] + self.final_channels // 8, out_channels = self.final_channels // 16) 
 
-    self.conv7 = nn.Conv2d(self.final_channels // 16, 1, kernel_size=1, stride=1, padding=0) # convert to one channel(depth)  
+    self.conv7 = nn.Conv2d(self.final_channels // 16, 1, kernel_size=1, stride=1, padding=0)   
 
   def forward(self, encoder_feature_maps):
     """
@@ -85,10 +89,12 @@ class Decoder(nn.Module):
 
 
 class MonocularDepthModel(nn.Module):
-  def __init__(self):
+  def __init__(self, backbone = 'densenet121'):
     super(MonocularDepthModel, self).__init__()
-    self.encoder = Encoder()
-    self.decoder = Decoder()  
+    if backbone != 'densenet121' and backbone != 'densenet161':
+      raise Exception('Backbone %s is not supported' % (backbone))
+    self.encoder = Encoder(backbone = backbone)
+    self.decoder = Decoder(backbone = backbone)  
 
   def forward(self, images):
     return torch.sigmoid(self.decoder(self.encoder(images)))

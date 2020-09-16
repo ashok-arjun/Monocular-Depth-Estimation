@@ -8,7 +8,7 @@ import torchvision.transforms as T
 
 from torch.nn import Upsample
 from model.net import MonocularDepthModel
-from model.dataloader import get_test_data
+from model.dataloader import get_test_dataloader
 from model.metrics import evaluate_predictions
 from model.loss import combined_loss
 from utils import *
@@ -51,7 +51,7 @@ def infer_depth(image_tensor, model, upsample = True):
     depth = Upsample(scale_factor = 2, mode = 'bilinear', align_corners = True)(depth)
   return depth
 
-def evaluate_list(model, samples, crop, batch_size, model_upsample=True):
+def evaluate(model, test_dataloader, model_upsample=True):
   """
   Evaluates on the test data(with the eigen crop). Function created for easy execution of test data(available as a list)
   """
@@ -66,11 +66,13 @@ def evaluate_list(model, samples, crop, batch_size, model_upsample=True):
 
   with torch.no_grad():
 
-    for i in range(0,len(samples),batch_size):
-      batch_samples = samples[i:i+batch_size]
-      images = torch.stack([bs['img'] for bs in batch_samples])
-      depths = torch.stack([bs['depth'] for bs in batch_samples])
-
+    for it, batch in enumerate(test_dataloader):
+      # check this
+      
+      images = batch[0]['img']
+      depths = batch[0]['depth']
+      crop = batch[1][0].cpu().numpy()
+      
       images = torch.autograd.Variable(images.to(device))
       depths = torch.autograd.Variable(depths.to(device))
 
@@ -108,24 +110,26 @@ def evaluate_list(model, samples, crop, batch_size, model_upsample=True):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Evaluation of depth estimation model on either test data/own images')
   parser.add_argument('--model', help='Model checkpoint path', required=True)
-  parser.add_argument('--data', help='Test data zip path(If evaluation on test data)')
+  parser.add_argument('--data_dir', help='Test data directory(If evaluation on test data)')
   parser.add_argument('--img', help='Image path(If evaluation on a single image)')
   parser.add_argument('--batch_size', type=int, help='Batch size to process the test data', default = 6)
   parser.add_argument('--output_dir', help='Directory to save output depth images', default = 'outputs')
+  parser.add_argument('--backbone', help='Model backbone - densenet 121 or densenet 161', default = 'densenet161')
+
 
   args = parser.parse_args()
 
-  if (args.data is None and args.img is None) or (args.data and args.img):
-    raise Exception('Please provide either the test .zip path or a single image\'s path')
+  if (args.data_dir is None and args.img is None) or (args.data_dir and args.img):
+    raise Exception('Please provide either the test data directory or a single image\'s path')
 
   device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-  model = MonocularDepthModel().to(device) 
+  model = MonocularDepthModel(backbone = args.backbone).to(device) 
   load_checkpoint(args.model, model)  
 
-  if args.data:
+  if args.data_dir:
     print('Evaluating on test data...')
-    samples, crop = get_test_data(args.data)  
-    test_metrics = evaluate_list(model, samples, crop, args.batch_size, model_upsample = True)
+    dataloader = get_test_dataloader(args.data_dir, args.batch_size)
+    test_metrics = evaluate(model, dataloader, model_upsample = True)
     for key, value in test_metrics.items():	
       print('Test %s: %f' % (key, value))
   elif args.img:

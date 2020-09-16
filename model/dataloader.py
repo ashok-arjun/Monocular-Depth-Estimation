@@ -12,25 +12,6 @@ from itertools import permutations
 import csv
 
 
-def get_test_data(path):
-  input_zip = ZipFile(path)
-  data = {name: input_zip.read(name) for name in input_zip.namelist()}
-
-  rgb = np.load(BytesIO(data['eigen_test_rgb.npy']))
-  depth = np.load(BytesIO(data['eigen_test_depth.npy']))
-  crop = np.load(BytesIO(data['eigen_test_crop.npy'])) 
-  depth = np.clip(depth, 1.0, 10.0) / 10 * 255 
-
-  toTensorFunc = ToTensor()
-  samples = []
-  for i in range(rgb.shape[0]):
-    img = Image.fromarray(rgb[i].astype(np.uint8), mode = 'RGB')
-    img_depth = Image.fromarray(depth[i].astype(np.uint8)[:,:], mode='L')
-    sample = {'img':img, 'depth':img_depth}
-    samples.append(toTensorFunc(sample = sample))
-  del data # frees memory
-  return samples, torch.from_numpy(crop)    
-
 
 class RandomHorizontalFlip(object):
   def __init__(self, prob = 0.5):
@@ -116,6 +97,25 @@ class NYUDepthDatasetRaw(torch.utils.data.Dataset):
   def __len__(self):   
     return len(self.dataset)
 
+class NYUDepthTestDataset(torch.utils.data.Dataset):
+  def __init__(self, data_dir, transforms):
+    self.data_dir = data_dir
+    self.transforms = transforms
+    
+    self.rgb = np.load(os.path.join(data_dir, 'eigen_test_rgb.npy'))
+    self.depth = np.clip(np.load(os.path.join(data_dir, 'eigen_test_depth.npy')), 1.0, 10.0) / 10 * 255 
+    self.crop = np.load(os.path.join(data_dir, 'eigen_test_crop.npy')) 
+        
+
+  def __getitem__(self, i):
+    img = Image.fromarray(self.rgb[i].astype(np.uint8), mode = 'RGB')
+    img_depth = Image.fromarray(self.depth[i].astype(np.uint8)[:,:], mode='L')
+    sample = {'img':img, 'depth':img_depth}
+    sample = self.transforms(sample)
+    return sample, self.crop
+    
+  def __len__(self):   
+    return self.rgb.shape[0]  
 
 def get_train_transforms():
   return T.Compose([RandomHorizontalFlip(), RandomChannelSwap(), ToTensor()])
@@ -141,3 +141,13 @@ class DataLoaders:
                                                   shuffle = shuffle,
                                                   num_workers = 0) 
     return train_dataloader
+  
+
+
+def get_test_dataloader(data_dir, batch_size, shuffle = False):
+  dataset = NYUDepthTestDataset(data_dir, get_test_transforms())
+  dataloader = torch.utils.data.DataLoader(dataset, 
+                                          batch_size = batch_size,
+                                          shuffle = shuffle,
+                                          num_workers = 0) 
+  return dataloader
