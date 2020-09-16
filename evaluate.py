@@ -113,6 +113,8 @@ if __name__ == '__main__':
   parser.add_argument('--img', help='Image path(If evaluation on a single image)')
   parser.add_argument('--batch_size', type=int, help='Batch size to process the test data', default = 6)
   parser.add_argument('--output_dir', help='Directory to save output depth images', default = 'outputs')
+  parser.add_argument('--backbone', help='Model backbone - densenet 121 or densenet 161', default = 'densenet161')
+
 
   args = parser.parse_args()
 
@@ -120,7 +122,7 @@ if __name__ == '__main__':
     raise Exception('Please provide either the test data directory or a single image\'s path')
 
   device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-  model = MonocularDepthModel().to(device) 
+  model = MonocularDepthModel(backbone = args.backbone).to(device) 
   load_checkpoint(args.model, model)  
 
   if args.data_dir:
