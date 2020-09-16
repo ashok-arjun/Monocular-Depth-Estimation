@@ -116,8 +116,8 @@ if __name__ == '__main__':
 
   args = parser.parse_args()
 
-  if (args.data is None and args.img is None) or (args.data and args.img):
-    raise Exception('Please provide either the test .zip path or a single image\'s path')
+  if (args.data_dir is None and args.img is None) or (args.data_dir and args.img):
+    raise Exception('Please provide either the test data directory or a single image\'s path')
 
   device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
   model = MonocularDepthModel().to(device) 
