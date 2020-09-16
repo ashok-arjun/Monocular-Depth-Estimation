@@ -1,8 +1,7 @@
 import time
 import datetime
 import pytz  
-import wandb
-
+import argparse
 import numpy as np
 import torch 
 import matplotlib.pyplot as plt
@@ -11,7 +10,6 @@ import torch.nn.functional as F
 import os
 from PIL import Image
 import torchvision.utils as vutils
-from torch.utils.tensorboard import SummaryWriter
 
 
 from model.net import MonocularDepthModel
@@ -26,7 +24,7 @@ class Trainer():
     self.dataloaders = DataLoaders(data_path, resized = resized)  
     self.test_data_path = test_data_path
 
-  def train_and_evaluate(self, config, checkpoint = None):
+  def train_and_evaluate(self, config):
     batch_size = config['batch_size']
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -34,30 +32,27 @@ class Trainer():
     num_batches = len(train_dataloader)
 
     test_dataloader = get_test_dataloader(self.test_data_path, config['test_batch_size'], shuffle=True)
-    
     model = MonocularDepthModel(backbone = config['backbone'])
+
     model = model.to(device)
     params = [param for param in model.parameters() if param.requires_grad == True]
     optimizer = torch.optim.Adam(params, config['lr'])
     
-
     loss_model = LossNetwork().to(device)
-      
-    wandb_step = config['start_epoch'] * num_batches -1 
-
-    accumulated_per_pixel_loss = RunningAverage()
-    accumulated_feature_loss = RunningAverage()
-    accumulated_iteration_time = RunningAverage()
-
-    if checkpoint:
-      load_checkpoint(checkpoint, model, optimizer)
-
+          
+    if config['checkpoint']:
+      load_checkpoint(config['checkpoint'], model, optimizer)
+    
     print('Training...')  
 
-    for epoch in range(config['start_epoch'], config['epochs']):
+    for epoch in range(config['epochs']):
+
+      accumulated_per_pixel_loss = RunningAverage()
+      accumulated_feature_loss = RunningAverage()
+      accumulated_iteration_time = RunningAverage()
       epoch_start_time = time.time()
+
       for iteration, batch in enumerate(train_dataloader):
-        wandb_step += 1
         model.train() 
         time_start = time.time()        
 
@@ -95,20 +90,17 @@ class Trainer():
           wandb.log({'Average per-pixel loss': accumulated_per_pixel_loss()}, step = wandb_step)
           wandb.log({'Average feature loss': accumulated_feature_loss()}, step = wandb_step)
           metrics = evaluate_predictions(predictions, depths)
-          self.write_metrics(metrics, wandb_step = wandb_step, train = True)
-          save_checkpoint({
-                  'iteration': wandb_step,
-                  'state_dict': model.state_dict(), 	
-                  'optim_dict': optimizer.state_dict()}, config['checkpoint_dir'], (epoch % config['save_to_cloud_every'] == 0))
+          self.write_metrics(metrics, wandb_step = wandb_step, train = True)   
                                
+                              
       epoch_end_time = time.time()
       print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
       torch.cuda.empty_cache()
 
       save_checkpoint({
-                  'iteration': wandb_step,
+                  'epoch': epoch,
                   'state_dict': model.state_dict(), 	
-                  'optim_dict': optimizer.state_dict()}, config['checkpoint_dir'], (epoch % config['save_to_cloud_every'] == 0))
+                  'optim_dict': optimizer.state_dict()}, config['checkpoint_dir'])
 
       print('Epoch %d saved\n\n' % (epoch))
 
@@ -159,3 +151,23 @@ class Trainer():
     del depth_plots	
     del pred_plots	
     del difference
+    
+# if __name__ == '__main__':
+#   parser = argparse.ArgumentParser(description='Training of depth estimation model')
+#   '''REQUIRED ARGUMENTS'''
+#   parser.add_argument('--data_dir', help='Train directory path - should contain the \'data\' folder', required = True)
+#   parser.add_argument('--batch_size', type=int, help='Batch size to process the train data', required = True)
+#   parser.add_argument('--checkpoint_dir', help='Directory to save checkpoints in', required = True)
+#   parser.add_argument('--epochs', type = int, help = 'Number of epochs', required = True)
+#   '''OPTIONAL ARGUMENTS'''
+#   parser.add_argument('--checkpoint', help='Model checkpoint path', default = None)
+#   parser.add_argument('--lr', help = 'Learning rate', default = 3e-4)
+#   parser.add_argument('--log_interval', help = 'Interval to print the avg. loss and metrics', default = 50)
+
+#   args = parser.parse_args()
+
+#   if not os.path.isdir(args.checkpoint_dir):
+#     os.mkdir(args.checkpoint_dir)
+
+#   trainer = Trainer(args.data_dir)
+#   trainer.train_and_evaluate(vars(args))

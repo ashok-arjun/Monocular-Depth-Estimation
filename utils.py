@@ -4,7 +4,6 @@ from PIL import Image
 import os 
 import shutil
 import torch
-import wandb
 
 def plot_color(ax, color, title="Color"):
 
@@ -107,25 +106,21 @@ class RunningAverage():
     return self.sum/self.count  
 
 
-def save_checkpoint(state, checkpoint_dir, save_to_cloud = False):
+def save_checkpoint(state, checkpoint_dir):
   filename = 'last.pth.tar'
   if not os.path.isdir(checkpoint_dir): os.mkdir(checkpoint_dir)
-#   torch.save(state, os.path.join(checkpoint_dir, filename))
-  torch.save(state, os.path.join(wandb.run.dir, filename))
-  if save_to_cloud:
-    wandb.save(filename)
+  torch.save(state, os.path.join(checkpoint_dir, filename))
 
 def load_checkpoint(checkpoint, model, optimizer=None):
     if not os.path.exists(checkpoint):
         raise Exception("File doesn't exist {}".format(checkpoint))
     checkpoint = torch.load(checkpoint)
-    print('Restoring checkpoint from net iteration %d' % (checkpoint['iteration']))
+    print('Restoring checkpoint from end of epoch %d' % (checkpoint['epoch']))
     model.load_state_dict(checkpoint['state_dict'])
     if optimizer: optimizer.load_state_dict(checkpoint['optim_dict'])
 
 def normalize_batch(batch):
-    # normalize a tensor in [0,1] using imagenet mean and std
-    
+    '''Normalize a tensor in [0,1] using imagenet mean and std'''    
     mean = batch.new_tensor([0.485, 0.456, 0.406]).view(-1, 1, 1)
     std = batch.new_tensor([0.229, 0.224, 0.225]).view(-1, 1, 1)
     return (batch - mean) / std
