@@ -23,7 +23,7 @@ This project addresses the problem of estimating the depth of a scene from the 2
 # Instructions
 <details>
 <summary>
-Installation 
+  <b>Installation</b> 
 </summary>
 
 To install, execute
@@ -35,7 +35,7 @@ pip install -r requirements.txt
 </details>
 <details>
 <summary>
-Data
+  <b>Data</b>
 </summary>
   
 [NYU Depth v2 train](https://tinyurl.com/nyu-data-zip)  - (50K images) (4.1 GB)
@@ -49,7 +49,7 @@ Data
 
 <details>
 <summary>
-Training
+  <b>Training</b>
 </summary>
   
 The script ```train.py``` contains the code for training the model. It can be invoked with the following arguments:
@@ -84,7 +84,7 @@ optional arguments:
 
 <details>
 <summary>
-Evaluation/Inference
+  <b>Evaluation/Inference</b>
 </summary>
   
 The script ```evaluate.py``` contains the code for evaluating the model/for predicting the depth given an image. It can be invoked with the following arguments:
