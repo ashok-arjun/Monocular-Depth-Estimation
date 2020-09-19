@@ -1,11 +1,11 @@
 <img src="https://img.shields.io/badge/python%20-%2314354C.svg?&style=for-the-badge&logo=python&logoColor=white"/> <img src="https://img.shields.io/badge/PyTorch%20-%23EE4C2C.svg?&style=for-the-badge&logo=PyTorch&logoColor=white" />
 
 
-# Fully Convolutional Dense Networks for High-Quality Monocular Depth Estimation
+# Perceptual Dense Network for High-Quality Monocular Depth Estimation
 
+Here, we propose an approach that integrates learning **low level** and **high level features** to estimate **high-quality depth maps** from **single-view 2-D images**
 
-This project addresses the problem of estimating the depth of a scene from the 2D image. A deep fully convolutional network in an encoder-decoder fashion has been used with skip connections between the encoder and the decoder.
-
+A deep **fully convolutional architecture** and suitable optimization objectives that minimize **a set of per-pixel loss functions** and **a perceptual loss function**, along with augmentation and training strategies has been employed.
 
 # Results
 
