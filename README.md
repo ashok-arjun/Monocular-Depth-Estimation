@@ -21,8 +21,7 @@ This project addresses the problem of estimating the depth of a scene from the 2
 
 |<img src="https://render.githubusercontent.com/render/math?math=\delta_1 \uparrow"> | <img src="https://render.githubusercontent.com/render/math?math=\delta_2 \uparrow"> |<img src="https://render.githubusercontent.com/render/math?math=\delta_3 \uparrow">|<img src="https://render.githubusercontent.com/render/math?math=rel \downarrow">|<img src="https://render.githubusercontent.com/render/math?math=rms\downarrow">|<img src="https://render.githubusercontent.com/render/math?math=log_{10}\downarrow">
 | :--------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------:| :--------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------: 
-|0.842|0.969|0.992|0.125|0.499|0.053
-
+|0.852 | 0.976 | 0.995 | 0.122 | 0.500 | 0.053
 # Instructions
 <details>
 <summary>
