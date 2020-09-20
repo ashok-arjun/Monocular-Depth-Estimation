@@ -132,5 +132,12 @@ arguments:
 Please cite the following if you find the code useful in your research:
 
 ```
-
+@misc{Ashok2020,
+  author = {Ashok, Arjun},
+  title = {Perceptual Dense Network for High-Quality Monocular Depth Estimation},
+  year = {2020},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/aiarjun/Monocular-Depth-Estimation}},
+}
 ```
