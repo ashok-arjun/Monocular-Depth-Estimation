@@ -111,3 +111,11 @@ arguments:
 ```
 
 </details>
+
+# Citation
+
+Please cite the following if you find the code useful in your research:
+
+```
+
+```
