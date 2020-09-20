@@ -20,8 +20,8 @@ from utils import *
 from evaluate import infer_depth, evaluate
 
 class Trainer():
-  def __init__(self, data_path, test_data_path, resized):
-    self.dataloaders = DataLoaders(data_path, resized = resized)  
+  def __init__(self, data_path, test_data_path):
+    self.dataloaders = DataLoaders(data_path)  
     self.test_data_path = test_data_path
 
   def train_and_evaluate(self, config):
@@ -152,22 +152,29 @@ class Trainer():
     del pred_plots	
     del difference
     
-# if __name__ == '__main__':
-#   parser = argparse.ArgumentParser(description='Training of depth estimation model')
-#   '''REQUIRED ARGUMENTS'''
-#   parser.add_argument('--data_dir', help='Train directory path - should contain the \'data\' folder', required = True)
-#   parser.add_argument('--batch_size', type=int, help='Batch size to process the train data', required = True)
-#   parser.add_argument('--checkpoint_dir', help='Directory to save checkpoints in', required = True)
-#   parser.add_argument('--epochs', type = int, help = 'Number of epochs', required = True)
-#   '''OPTIONAL ARGUMENTS'''
-#   parser.add_argument('--checkpoint', help='Model checkpoint path', default = None)
-#   parser.add_argument('--lr', help = 'Learning rate', default = 3e-4)
-#   parser.add_argument('--log_interval', help = 'Interval to print the avg. loss and metrics', default = 50)
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='Training of depth estimation model')
+  '''REQUIRED ARGUMENTS'''
+  parser.add_argument('--train_dir', help='Train directory path - should contain the \'data\' folder', required = True)
+  parser.add_argument('--test_dir', help='Test directory path - should contain 3 files', required = True)
+  parser.add_argument('--batch_size', type=int, help='Batch size to process the train data', required = True)
+  parser.add_argument('--checkpoint_dir', help='Directory to save checkpoints in', required = True)
+  parser.add_argument('--epochs', type = int, help = 'Number of epochs', required = True)
+  '''OPTIONAL ARGUMENTS'''
+  parser.add_argument('--checkpoint', help='Model checkpoint path', default = None)
+  parser.add_argument('--lr', help = 'Learning rate', default = 3e-4)
+  parser.add_argument('--log_interval', help = 'Interval to print the avg. loss and metrics', default = 50)
+  parser.add_argument('--backbone', type=str, help = 'Model backbone: densenet161 or densenet121', default = 'densenet161')
+  parser.add_argument('--test_batch_size', type=int, help='Batch size for frequent testing', default = 2)
+  parser.add_argument('--perceptual_weight', type=int, help='Weight for the perceptual loss', default = 0.5)
 
-#   args = parser.parse_args()
+  args = parser.parse_args()
 
-#   if not os.path.isdir(args.checkpoint_dir):
-#     os.mkdir(args.checkpoint_dir)
+  if args.backbone not in ('densenet161', 'densenet121'):
+    raise Exception('Invalid backbone specified!')
 
-#   trainer = Trainer(args.data_dir)
-#   trainer.train_and_evaluate(vars(args))
+  if not os.path.isdir(args.checkpoint_dir):
+    os.mkdir(args.checkpoint_dir)
+
+  trainer = Trainer(args.train_dir, args.test_dir)
+  trainer.train_and_evaluate(vars(args))
