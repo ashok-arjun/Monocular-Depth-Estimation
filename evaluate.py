@@ -133,9 +133,8 @@ if __name__ == '__main__':
     for key, value in test_metrics.items():	
       print('Test %s: %f' % (key, value))
   elif args.img:
-    print('Evaluating on a single image...')
-    if ''.join(list(args.img)[-3:]) == 'png': raise Exception('Only JPEG/JPG Images are allowed. Please convert your image.') 
-    image = (Image.open(args.img))
+    print('Evaluating on a single image...')     
+    image = (Image.open(args.img)).convert('RGB')
     image = T.ToTensor()(image)
     depth = infer_depth(image, model, upsample = True)    
     fig = plt.figure()
