@@ -94,6 +94,8 @@ optional arguments:
 
 ```
 
+It is advised to run the code on a GPU. The code automatically detects if a GPU is available, and uses it.
+
 </details>
 
 <details>
@@ -124,6 +126,8 @@ arguments:
   --backbone BACKBONE   Model backbone - densenet 121 or densenet 161
 
 ```
+
+It is advised to run the code on a GPU. The code automatically detects if a GPU is available, and uses it.
 
 </details>
 
