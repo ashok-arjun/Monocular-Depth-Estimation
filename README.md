@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/278440645.svg)](https://zenodo.org/badge/latestdoi/278440645)
 <img src="https://img.shields.io/badge/python%20-%2314354C.svg?&style=for-the-badge&logo=python&logoColor=white"/> <img src="https://img.shields.io/badge/PyTorch%20-%23EE4C2C.svg?&style=for-the-badge&logo=PyTorch&logoColor=white" />
 
 
@@ -140,8 +141,9 @@ Please cite the following if you find the code useful in your research:
   author = {Ashok, Arjun},
   title = {Perceptual Dense Network for High-Quality Monocular Depth Estimation},
   year = {2020},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/aiarjun/Monocular-Depth-Estimation}},
+  publisher = {Zenodo},
+  doi = {10.5281/zenodo.4041690},
+  version = {1.0},
+  url = {https://doi.org/10.5281/zenodo.4041690}
 }
 ```
