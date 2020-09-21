@@ -142,4 +142,6 @@ if __name__ == '__main__':
     depth_plot = plot_depth(ax, plot_batch_depths(depth)[0])
     if not os.path.isdir(args.output_dir):
       os.mkdir(args.output_dir)
-    fig.savefig(os.path.join(args.output_dir, 'depth_output.png')) 
+    output_path = os.path.join(args.output_dir, 'depth_output.png')
+    fig.savefig(output_path) 
+    print('Saved output at %s' % (output_path))
