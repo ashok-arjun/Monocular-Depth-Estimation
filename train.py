@@ -95,7 +95,7 @@ class Trainer():
       torch.cuda.empty_cache()
 
       save_checkpoint({
-                  'epoch': epoch,
+                  'iteration': num_batches * epoch + iteration,
                   'state_dict': model.state_dict(), 	
                   'optim_dict': optimizer.state_dict()}, config['checkpoint_dir'])
 
