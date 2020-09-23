@@ -87,11 +87,8 @@ class Trainer():
           print(datetime.datetime.now(pytz.timezone('Asia/Kolkata')), end = ': ')
           print('Epoch: %d [%d / %d] ; it_time: %f (%f) ; eta: %s' % (epoch, iteration, num_batches, time_end - time_start, accumulated_iteration_time(), eta))
           print('Average per-pixel loss: %f; Average feature loss: %f' % (accumulated_per_pixel_loss(), accumulated_feature_loss()))
-          wandb.log({'Average per-pixel loss': accumulated_per_pixel_loss()}, step = wandb_step)
-          wandb.log({'Average feature loss': accumulated_feature_loss()}, step = wandb_step)
           metrics = evaluate_predictions(predictions, depths)
-          self.write_metrics(metrics, wandb_step = wandb_step, train = True)   
-                               
+                              
                               
       epoch_end_time = time.time()
       print('Epoch %d complete, time taken: %s' % (epoch, str(datetime.timedelta(seconds = int(epoch_end_time - epoch_start_time)))))
@@ -107,25 +104,11 @@ class Trainer():
       # EVALUATE ON TEST DATA:
 
       test_metrics = evaluate(model, test_dataloader, model_upsample = True)
-      self.write_metrics(test_metrics, wandb_step, train=False)
 
       random_test_batch = next(iter(test_dataloader))
       log_images = random_test_batch[0]['img']
       log_depths = random_test_batch[0]['depth']
       log_preds = torch.cat([infer_depth(img, model, upsample = True)[0].unsqueeze(0) for img in log_images], dim = 0)
-      self.compare_predictions(log_images, log_depths, log_preds, wandb_step)
-
-
-  def write_metrics(self, metrics, wandb_step, train = True):	
-    writing_metrics = ['d1_accuracy', 'rmse']
-
-    if train:	
-      for key in writing_metrics:	
-        wandb.log({'Train '+key: metrics[key]}, step = wandb_step)	
-    else:	
-      for key in writing_metrics:	
-        wandb.log({'Test '+key: metrics[key]}, step = wandb_step) 
-
         
   def get_with_colormap(self, plots):
     images = []
@@ -135,22 +118,6 @@ class Trainer():
       os.remove('_.png')
       images.append(img)
     return images
-        
-  def compare_predictions(self, images, depths, predictions, wandb_step):	
-    image_plots = plot_batch_images(images)	
-    depth_plots = self.get_with_colormap(plot_batch_depths(depths))	
-    pred_plots = self.get_with_colormap(plot_batch_depths(predictions))	
-    difference = self.get_with_colormap(plot_batch_depths(torch.abs(depths.cpu() - predictions.cpu())))  
-    
-    wandb.log({"Sample Validation images": [wandb.Image(image_plot) for image_plot in image_plots]}, step = wandb_step)	
-    wandb.log({"Sample Validation depths": [wandb.Image(image_plot) for image_plot in depth_plots]}, step = wandb_step)	
-    wandb.log({"Sample Validation predictions": [wandb.Image(image_plot) for image_plot in pred_plots]}, step = wandb_step)	
-    wandb.log({"Sample Validation differences": [wandb.Image(image_plot) for image_plot in difference]}, step = wandb_step)	
-
-    del image_plots	
-    del depth_plots	
-    del pred_plots	
-    del difference
     
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Training of depth estimation model')
