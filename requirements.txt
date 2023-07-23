@@ -1,7 +1,7 @@
 h5py==2.10.0
 matplotlib==3.2.2
 pytz==2018.9
-torch==1.6.0+cu101
+torch==1.13.1
 torchvision==0.7.0+cu101
 numpy==1.18.5
 Pillow==9.0.0
