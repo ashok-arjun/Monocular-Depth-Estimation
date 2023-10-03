@@ -4,4 +4,4 @@ pytz==2018.9
 torch==1.6.0+cu101
 torchvision==0.7.0+cu101
 numpy==1.18.5
-Pillow==9.0.0
+Pillow==10.0.1
